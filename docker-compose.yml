@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  maptoposter:
+    build: .
+    image: maptoposter-web:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./posters:/app/posters
+      - ./cache:/app/cache
+    restart: always
