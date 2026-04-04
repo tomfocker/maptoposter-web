@@ -1,0 +1,42 @@
+<h2>2. 架构方案选择</h2>
+<p class="subtitle">考虑到项目核心是 Python 及其地理处理库 (OSMnx)，哪种架构更符合你的需求？</p>
+
+<div class="options">
+  <div class="option" data-choice="integrated" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>单体轻量级架构 (Flask/FastAPI + Jinja2)</h3>
+      <p><strong>优点：</strong> 部署极快，镜像体积小，代码复杂度低。适合个人使用或轻量级分享。</p>
+      <p><strong>缺点：</strong> 前端交互相对传统，复杂状态管理较难。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="separated" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>现代前后端分离 (FastAPI + React/Vue)</h3>
+      <p><strong>优点：</strong> 交互极其流畅（如搜索联想、动态进度条）。扩展性强，适合打造成一个完整产品。</p>
+      <p><strong>缺点：</strong> Docker 镜像构建更复杂（需编译 Node.js），运行时资源占用略高。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>技术权衡</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>方案 A (推荐)</h4>
+      <ul>
+        <li>直接复用现有 Python 环境</li>
+        <li>由于生成地图是耗时操作，简单架构更易处理阻塞</li>
+        <li>维护成本极低</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>方案 B</h4>
+      <ul>
+        <li>虽然体验更好，但会增加开发和维护周期</li>
+        <li>对于“开箱即用”的 Docker 镜像，A 方案更容易做到稳定</li>
+      </ul>
+    </div>
+  </div>
+</div>

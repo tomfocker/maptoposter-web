@@ -7,7 +7,14 @@ import os
 import asyncio
 from typing import List
 from create_map_poster import get_available_themes, create_poster, load_theme
+import create_map_poster
 from geopy.geocoders import Nominatim
+import osmnx as ox
+
+# 配置 OSMnx：开启控制台日志并使用默认设置
+ox.settings.log_console = True
+ox.settings.use_cache = True
+# 移除 hardcoded overpass_url，以便在云端使用默认节点
 
 app = FastAPI(title="MapToPoster Web")
 
@@ -33,11 +40,17 @@ async def generate_poster(
     country: str = Form(...),
     theme: str = Form("terracotta"),
     dist: int = Form(4000),
-    dpi: int = Form(300)
+    dpi: int = Form(300),
+    map_x_offset: float = Form(0.0),
+    map_y_offset: float = Form(0.0),
+    road_width_scale: float = Form(1.0)
 ):
-    # 地理编码：获取坐标
+    # 地理编码：获取坐标 (增加超时时间到 10 秒)
     geolocator = Nominatim(user_agent="maptoposter-web")
-    location = geolocator.geocode(f"{city}, {country}")
+    try:
+        location = geolocator.geocode(f"{city}, {country}", timeout=10)
+    except Exception as e:
+        return HTMLResponse(content=f"<div class='text-red-500'>地理编码失败（网络超时）：{str(e)}。请重试。</div>")
     
     if not location:
         return HTMLResponse(content="<div class='text-red-500'>错误：找不到该城市，请检查名称。</div>")
@@ -51,16 +64,24 @@ async def generate_poster(
     output_path = os.path.join(POSTERS_DIR, output_filename)
     
     # 调用生成函数 (同步调用，HTMX 负载指示器会处理等待状态)
-    # 注意：在生产中建议用 BackgroundTasks 或 Celery，这里为演示简单直接运行
     try:
-        # 加载主题 (create_poster 内部会调用，但我们需要确保 themes 存在)
+        # 1. 加载并设置全局主题
+        create_map_poster.THEME = load_theme(theme)
+        
+        # 2. 如果提供了自定义道路缩放，则与主题自带的缩放叠加
+        current_scale = create_map_poster.THEME.get("road_width_scale", 1.0)
+        create_map_poster.THEME["road_width_scale"] = current_scale * road_width_scale
+        
+        # 3. 生成海报
         create_poster(
             city=city,
             country=country,
             point=point,
             dist=dist,
             output_file=output_path,
-            output_format="png"
+            output_format="png",
+            map_x_offset=map_x_offset,
+            map_y_offset=map_y_offset
         )
         
         # 返回预览 HTML 片段，并触发历史更新事件

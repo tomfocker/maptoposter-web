@@ -41,6 +41,26 @@
                     </div>
                 </div>
 
+                <!-- 构图微调 -->
+                <div class="border-t pt-4">
+                    <h3 class="text-sm font-semibold text-gray-600 mb-3">构图微调</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">水平偏移 (X)</label>
+                            <input type="number" name="map_x_offset" value="0.0" step="0.01" min="-0.5" max="0.5" class="w-full border rounded px-2 py-1 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">垂直偏移 (Y)</label>
+                            <input type="number" name="map_y_offset" value="0.0" step="0.01" min="-0.5" max="0.5" class="w-full border rounded px-2 py-1 text-sm">
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="block text-xs font-medium text-gray-500 mb-1">道路粗细缩放</label>
+                        <input type="number" name="road_width_scale" value="1.0" step="0.1" min="0.1" max="10.0" class="w-full border rounded px-2 py-1 text-sm">
+                        <p class="text-[10px] text-gray-400 mt-1">注：部分主题自带缩放倍率，此值将与之叠加。</p>
+                    </div>
+                </div>
+
                 <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition duration-200">
                     立即生成
                 </button>

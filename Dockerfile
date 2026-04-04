@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /app
 
@@ -21,10 +21,10 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# 安装运行时必需的最小依赖 (GDAL 等)
+# 安装运行时必需的最小依赖 (使用更通用的包名)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgdal32 \
-    libproj25 \
+    libgdal-dev \
+    libproj-dev \
     fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 

@@ -1,0 +1,29 @@
+<h2>Docker 构建策略推荐：方案 B (极简生产镜像)</h2>
+<p class="subtitle">为什么推荐方案 B？</p>
+
+<div class="pros-cons">
+  <div class="pros">
+    <h4>方案 B (专家推荐)</h4>
+    <ul>
+      <li><strong>体积更小：</strong> 只保留运行代码必需的文件，下载更快（GIS 库通常很大）。</li>
+      <li><strong>安全性高：</strong> 镜像内不含编译器等开发工具，减少攻击面。</li>
+      <li><strong>部署友好：</strong> 虽然构建脚本稍显复杂，但对最终用户来说，<code>docker run</code> 的体验是一样的。</li>
+    </ul>
+  </div>
+  <div class="cons">
+    <h4>方案 A</h4>
+    <ul>
+      <li>镜像中会充斥着大量的构建缓存和临时文件。</li>
+      <li>体积可能达到 2GB 以上，浪费存储和带宽。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="section">
+  <h3>最终方案预告</h3>
+  <ul>
+    <li><strong>界面：</strong> 方案 1 (Dashboard) - 左侧参数调整，右侧大图预览。</li>
+    <li><strong>架构：</strong> Flask/FastAPI + Jinja2 (轻量级)。</li>
+    <li><strong>数据持久化：</strong> 使用 Docker Volume 挂载海报导出目录，保持生成历史。</li>
+  </ul>
+</div>

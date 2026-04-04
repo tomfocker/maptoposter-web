@@ -1,0 +1,45 @@
+<h2>3. 界面布局 & Docker 策略</h2>
+<p class="subtitle">我们已经选定了 Flask/FastAPI 架构。下面是具体的界面和镜像实现路径。</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">方案 1: 经典仪表盘 (Dashboard)</div>
+    <div class="mockup-body">
+      <div class="mock-nav">侧边栏: 创建、历史、设置</div>
+      <div style="display: flex;">
+        <div class="mock-sidebar" style="width: 30%">参数表单</div>
+        <div class="mock-content" style="flex: 1">海报实时预览区域</div>
+      </div>
+      <p><strong>优点：</strong> 适合多图生成、对比，更有“应用感”。</p>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">方案 2: 引导式流程 (Flow)</div>
+    <div class="mockup-body">
+      <div class="mock-content">
+        <p>1. 搜城市 -> 2. 选主题 -> 3. 生成预览 -> 4. 下载历史</p>
+      </div>
+      <p><strong>优点：</strong> 及其直观，新用户几乎不需要学习成本。</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Docker 构建策略</h3>
+  <div class="options">
+    <div class="option" data-choice="all-in-one" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>全能单体镜像 (All-in-one)</h3>
+        <p>将 Python, OSMnx, Web Server 全部打入一个镜像。用户只需 <code>docker run</code> 即可在 8080 端口访问。</p>
+      </div>
+    </div>
+    <div class="option" data-choice="slim" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>极简生产镜像 (Slim)</h3>
+        <p>使用多阶段构建（Multi-stage），仅保留运行时必需的依赖，尽量缩减体积（考虑到 OSMnx 依赖较重，这很重要）。</p>
+      </div>
+    </div>
+  </div>
+</div>
