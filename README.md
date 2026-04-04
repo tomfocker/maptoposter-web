@@ -20,6 +20,30 @@ Generate beautiful, minimalist map posters for any city in the world.
 | UAE          | Dubai          | midnight_blue   | <img src="posters/dubai_midnight_blue_20260118_140807.png" width="250"> |
 | USA          | Seattle        | emerald         | <img src="posters/seattle_emerald_20260124_162244.png" width="250"> |
 
+## 🎨 Web UI & Docker (New!)
+
+现在你可以通过 Web 界面以可视化的方式生成海报，并使用 Docker 开箱即用。
+
+### 使用 Docker 快速启动
+
+1. **一键启动：**
+   ```bash
+   docker-compose up -d
+   ```
+2. **访问：**
+   打开浏览器访问 `http://localhost:8000`
+
+### 手动启动 Web UI
+
+1. **安装依赖：**
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **运行应用：**
+   ```bash
+   python app/main.py
+   ```
+
 ## Installation
 
 ### With uv (Recommended)
