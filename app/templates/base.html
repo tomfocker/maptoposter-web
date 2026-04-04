@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MapToPoster Web{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow-md p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800">MapToPoster</h1>
+            <div class="text-sm text-gray-500">Transform cities into art</div>
+        </div>
+    </nav>
+    <main class="container mx-auto mt-8 p-4">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
