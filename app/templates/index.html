@@ -6,44 +6,75 @@
     <aside class="w-full lg:w-1/3 bg-white rounded-lg shadow-sm p-6">
         <h2 class="text-lg font-semibold mb-6 border-b pb-2">生成新海报</h2>
         
-        <form id="poster-form" hx-post="/generate" hx-target="#preview-area" hx-indicator="#loading-indicator">
+        <form id="poster-form" hx-post="/generate" hx-target="#preview-area">
             <div class="space-y-4">
-                <!-- 城市搜索 -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">城市名称</label>
-                    <input type="text" name="city" placeholder="例如: Shanghai" class="w-full border rounded px-3 py-2" required>
+                <!-- 城市搜索 (后台地理编码用) -->
+                <div class="bg-blue-50 p-4 rounded-lg mb-4">
+                    <h3 class="text-sm font-semibold text-blue-800 mb-2">1. 搜索目标城市 (支持中文)</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">城市名称</label>
+                            <input type="text" name="city" placeholder="如: 上海 或 Shanghai" class="w-full border rounded px-3 py-2 text-sm" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">国家/地区</label>
+                            <input type="text" name="country" placeholder="如: 中国 或 China" class="w-full border rounded px-3 py-2 text-sm" required>
+                        </div>
+                    </div>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">国家名称</label>
-                    <input type="text" name="country" placeholder="例如: China" class="w-full border rounded px-3 py-2" required>
+
+                <!-- 海报文字覆盖 (显示用) -->
+                <div class="bg-gray-50 p-4 rounded-lg mb-4 border">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-2">2. 海报文字覆盖 (选填)</h3>
+                    <p class="text-xs text-gray-500 mb-3">如果留空，海报上将直接打印上方搜索用的名称。填写此处可实现“搜中文，印英文”或“搜标准名，印别称”。支持自动识别中文并应用思源黑体。</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">海报大标题 (城市)</label>
+                            <input type="text" name="display_city" placeholder="如: 魔都" class="w-full border rounded px-3 py-2 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-700 mb-1">海报小标题 (国家)</label>
+                            <input type="text" name="display_country" placeholder="如: 中国" class="w-full border rounded px-3 py-2 text-sm">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 主题选择 -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">主题方案</label>
-                    <select name="theme" class="w-full border rounded px-3 py-2">
-                        {% for theme in themes %}
-                        <option value="{{ theme }}">{{ theme.capitalize() }}</option>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">3. 主题方案</label>
+                    <select name="theme" id="theme-select" class="w-full border rounded px-3 py-2 text-sm" onchange="document.querySelectorAll('.theme-preview').forEach(el => el.classList.add('hidden')); document.getElementById('preview-' + this.value).classList.remove('hidden');">
+                        {% for t in theme_details %}
+                        <option value="{{ t.id }}">{{ t.name }}</option>
                         {% endfor %}
                     </select>
+                    
+                    <div class="mt-2 h-6 rounded overflow-hidden flex border border-gray-300">
+                        {% for t in theme_details %}
+                        <div id="preview-{{ t.id }}" class="theme-preview w-full flex {% if not loop.first %}hidden{% endif %}">
+                            <div class="flex-1" style="background-color: {{ t.colors[0] }};"></div>
+                            <div class="flex-1" style="background-color: {{ t.colors[1] }};"></div>
+                            <div class="flex-1" style="background-color: {{ t.colors[2] }};"></div>
+                            <div class="flex-1" style="background-color: {{ t.colors[3] }};"></div>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
 
                 <!-- 高级设置 -->
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">半径 (米)</label>
-                        <input type="number" name="dist" value="4000" class="w-full border rounded px-3 py-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">4. 半径 (米)</label>
+                        <input type="number" name="dist" value="4000" class="w-full border rounded px-3 py-2 text-sm">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">DPI</label>
-                        <input type="number" name="dpi" value="300" class="w-full border rounded px-3 py-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">5. DPI</label>
+                        <input type="number" name="dpi" value="300" class="w-full border rounded px-3 py-2 text-sm">
                     </div>
                 </div>
 
                 <!-- 构图微调 -->
                 <div class="border-t pt-4">
-                    <h3 class="text-sm font-semibold text-gray-600 mb-3">构图微调</h3>
+                    <h3 class="text-sm font-semibold text-gray-600 mb-3">6. 构图微调</h3>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-medium text-gray-500 mb-1">水平偏移 (X)</label>
@@ -61,19 +92,18 @@
                     </div>
                 </div>
 
+                <!-- 缓存提示 -->
+                <div class="bg-indigo-50 border-l-4 border-indigo-400 p-3 mt-4">
+                    <p class="text-xs text-indigo-700">
+                        <strong>💡 智能缓存机制：</strong> 本工具已开启 OSM 地理数据本地缓存。相同城市的首次下载可能需要 1-2 分钟，之后的任意主题生成将触发<strong>秒开极速渲染</strong>。
+                    </p>
+                </div>
+
                 <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition duration-200">
                     立即生成
                 </button>
             </div>
         </form>
-
-        <div id="loading-indicator" class="htmx-indicator mt-4 flex items-center justify-center space-x-2 text-blue-600">
-            <svg class="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>地图生成中，这可能需要一两分钟...</span>
-        </div>
     </aside>
 
     <!-- 主预览区域 -->
