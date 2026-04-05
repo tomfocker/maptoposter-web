@@ -70,7 +70,7 @@ def has_chinese(text: str) -> bool:
 
 from contextlib import redirect_stdout, redirect_stderr
 
-def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale, original_city, original_country):
+def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale, original_city, original_country, width, height, output_format):
     try:
         f_out = LogCapture(task_id)
         f_err = ErrorCapture(task_id)
@@ -89,7 +89,9 @@ def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offs
                 point=point,
                 dist=dist,
                 output_file=output_path,
-                output_format="png",
+                output_format=output_format,
+                width=width,
+                height=height,
                 map_x_offset=map_x_offset,
                 map_y_offset=map_y_offset,
                 fonts=active_fonts
@@ -186,10 +188,21 @@ async def generate_poster(
     theme: str = Form("terracotta"),
     dist: int = Form(4000),
     dpi: int = Form(300),
+    size: str = Form("12x16"),
+    output_format: str = Form("png"),
     map_x_offset: float = Form(0.0),
     map_y_offset: float = Form(0.0),
     road_width_scale: float = Form(1.0)
 ):
+    # 解析画布尺寸
+    try:
+        width_str, height_str = size.split('x')
+        width = float(width_str)
+        height = float(height_str)
+    except ValueError:
+        width = 12.0
+        height = 16.0
+
     # 地理编码：获取坐标 (增加超时时间到 10 秒)
     # 恢复使用 Nominatim 并指定未被 GFW 封锁的镜像节点 (qgis.org)，确保中英文解析均精准
     geolocator = Nominatim(domain='nominatim.qgis.org', scheme='https', user_agent="maptoposter-web")
@@ -208,6 +221,7 @@ async def generate_poster(
     address = location.raw.get("address", {})
     en_city = address.get("city") or address.get("town") or address.get("county") or address.get("village") or location.raw.get("name") or city
     en_country = address.get("country", country)
+
     # 检查中文字体需求：如果用户显式填写了显示文字，用用户的；否则用自动获取的英文名
     final_city = display_city if display_city else en_city
     final_country = display_country if display_country else en_country
@@ -219,14 +233,14 @@ async def generate_poster(
     # 生成文件名
     timestamp = int(asyncio.get_event_loop().time())
     city_slug = city.lower().replace(" ", "_")
-    output_filename = f"{city_slug}_{theme}_{timestamp}.png"
+    output_filename = f"{city_slug}_{theme}_{timestamp}.{output_format}"
     output_path = os.path.join(POSTERS_DIR, output_filename)
-    
+
     # 初始化任务状态
     task_id = str(uuid.uuid4())
     with tasks_lock:
         TASKS_STATE[task_id] = {"status": "running", "log": "正在准备生成环境...", "filename": ""}
-    
+
     # 启动后台任务
     background_tasks.add_task(
         run_poster_task,
@@ -242,8 +256,12 @@ async def generate_poster(
         theme=theme,
         road_width_scale=road_width_scale,
         original_city=en_city,
-        original_country=en_country
+        original_country=en_country,
+        width=width,
+        height=height,
+        output_format=output_format
     )
+
     
     # 返回轮询组件
     return HTMLResponse(content=f"""

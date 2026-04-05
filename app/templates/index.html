@@ -67,12 +67,33 @@
                 <!-- 高级设置 -->
                 <div class="grid grid-cols-2 gap-4 pt-4 border-t">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">4. 半径 (米)</label>
-                        <input type="number" name="dist" value="4000" class="w-full border rounded px-3 py-2 text-sm">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">4. 渲染半径 (米)</label>
+                        <input type="number" name="dist" value="4000" class="w-full border rounded px-3 py-2 text-sm" title="数值越大，地图包含的范围越广">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">5. DPI</label>
-                        <input type="number" name="dpi" value="300" class="w-full border rounded px-3 py-2 text-sm">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">5. 画布尺寸 (英寸)</label>
+                        <select name="size" class="w-full border rounded px-3 py-2 text-sm">
+                            <option value="12x16">12x16 (标准竖版 3:4)</option>
+                            <option value="16x20">16x20 (大竖版 4:5)</option>
+                            <option value="16x12">16x12 (横版 4:3)</option>
+                            <option value="10x10">10x10 (正方形 1:1)</option>
+                            <option value="9x16">9x16 (手机壁纸竖版)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mt-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">图片质量 (DPI)</label>
+                        <input type="number" name="dpi" value="300" class="w-full border rounded px-3 py-2 text-sm" title="推荐 300 适合印刷，72 适合快速预览">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">导出格式</label>
+                        <select name="output_format" class="w-full border rounded px-3 py-2 text-sm">
+                            <option value="png">PNG (推荐，适合分享)</option>
+                            <option value="pdf">PDF (矢量，适合印刷)</option>
+                            <option value="svg">SVG (纯矢量，可编辑)</option>
+                        </select>
                     </div>
                 </div>
 
