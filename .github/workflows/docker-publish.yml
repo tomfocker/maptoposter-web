@@ -33,9 +33,9 @@ jobs:
           registry: ${{ env.REGISTRY }}
           # These secrets need to be configured in your GitHub repository settings
           # Go to Settings -> Secrets and variables -> Actions
-          # Add DOCKERHUB_USERNAME and DOCKERHUB_TOKEN
+          # Add DOCKERHUB_USERNAME and DOCKER_PASSWORD
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Extract Docker metadata
         id: meta
