@@ -1,50 +1,55 @@
-# City Map Poster Generator
+# MapToPoster Web 🌍🎨
 
-Generate beautiful, minimalist map posters for any city in the world.
+> 本项目是基于 [originalankur/maptoposter](https://github.com/originalankur/maptoposter) 核心渲染引擎开发的 **Web 可视化面板及 Docker 镜像增强版**。
+
+Generate beautiful, minimalist map posters for any city in the world. Now with a modern **Web UI, Docker support, and deep Chinese localization**!
 
 <img src="posters/singapore_neon_cyberpunk_20260118_153328.png" width="250">
 <img src="posters/dubai_midnight_blue_20260118_140807.png" width="250">
 
-## Examples
+## ✨ 核心增强功能 (Web UI Features)
 
-| Country      | City           | Theme           | Poster |
-|:------------:|:--------------:|:---------------:|:------:|
-| USA          | San Francisco  | sunset          | <img src="posters/san_francisco_sunset_20260118_144726.png" width="250"> |
-| Spain        | Barcelona      | warm_beige      | <img src="posters/barcelona_warm_beige_20260118_140048.png" width="250"> |
-| Italy        | Venice         | blueprint       | <img src="posters/venice_blueprint_20260118_140505.png" width="250"> |
-| Japan        | Tokyo          | japanese_ink    | <img src="posters/tokyo_japanese_ink_20260118_142446.png" width="250"> |
-| India        | Mumbai         | contrast_zones  | <img src="posters/mumbai_contrast_zones_20260118_145843.png" width="250"> |
-| Morocco      | Marrakech      | terracotta      | <img src="posters/marrakech_terracotta_20260118_143253.png" width="250"> |
-| Singapore    | Singapore      | neon_cyberpunk  | <img src="posters/singapore_neon_cyberpunk_20260118_153328.png" width="250"> |
-| Australia    | Melbourne      | forest          | <img src="posters/melbourne_forest_20260118_153446.png" width="250"> |
-| UAE          | Dubai          | midnight_blue   | <img src="posters/dubai_midnight_blue_20260118_140807.png" width="250"> |
-| USA          | Seattle        | emerald         | <img src="posters/seattle_emerald_20260124_162244.png" width="250"> |
+相比原版的纯 CLI 工具，本增强版提供了极致的“开箱即用”体验：
 
-## 🎨 Web UI & Docker (New!)
+- 🚀 **开箱即用的 Docker 支持**：无需再痛苦地在本地编译安装 `GDAL`、`GEOS` 等复杂的地理库，一个 `docker-compose up -d` 即可在任意系统上运行。
+- 🖥️ **现代化的 Web 仪表盘**：告别黑框框，通过直观的浏览器界面（`http://localhost:8000`）配置你的海报。
+- 🇨🇳 **深度中文本地化**：
+  - **搜索解耦**：底层支持通过中文搜索全球城市，即使输入中文（如“纽约”），依然能默认渲染出极具设计感的英文大写海报。
+  - **自定义中文字体**：如果强制输入中文显示，自动下载并挂载 `Noto Sans SC`（思源黑体），彻底告别乱码方块。
+  - **主题意译**：47 款绝美主题（包含 30+ 中国特色城市主题）全部进行了中文意译，如下拉框直接显示“日式水墨”、“午夜深蓝”等。
+- 🎨 **主题色彩预览**：选择主题时，下拉框会直观地显示该主题的“背景、道路、水系、公园”四色调色板。
+- ⏱️ **HTMX 实时日志进度条**：由于下载地图瓦片极度耗时，我们通过拦截 Python `stdout` 并在前端进行秒级轮询，让你实时看到下载、渲染进度，消除等待焦虑。
+- 📐 **高级构图微调**：支持 X/Y 轴视口偏移、道路粗细缩放、自定义画布尺寸（如 9x16 手机壁纸）以及多格式导出（PNG, PDF, SVG）。
+- 🖼️ **竖版历史记录墙**：生成的历史海报采用完整的竖版网格展示，一键下载原图。
 
-现在你可以通过 Web 界面以可视化的方式生成海报，并使用 Docker 开箱即用。
+## 🚀 快速开始 (Quick Start)
 
-### 使用 Docker 快速启动
+### 使用 Docker (强烈推荐)
+
+只要你的机器安装了 Docker 和 Docker Compose：
 
 1. **一键启动：**
    ```bash
-   docker-compose up -d
+   docker-compose up -d --build
    ```
-2. **访问：**
+2. **访问 Web UI：**
    打开浏览器访问 `http://localhost:8000`
 
-### 手动启动 Web UI
+### 手动启动 (Python 环境)
+
+如果你想在本地开发或不想使用 Docker：
 
 1. **安装依赖：**
    ```bash
    pip install -r requirements.txt
    ```
-2. **运行应用：**
+2. **运行 FastAPI 应用：**
    ```bash
    python app/main.py
    ```
 
-## Installation
+## 🛠️ CLI Features
+
 
 ### With uv (Recommended)
 
