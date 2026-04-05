@@ -70,7 +70,7 @@ def has_chinese(text: str) -> bool:
 
 from contextlib import redirect_stdout, redirect_stderr
 
-def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale):
+def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale, original_city, original_country):
     try:
         f_out = LogCapture(task_id)
         f_err = ErrorCapture(task_id)
@@ -84,8 +84,8 @@ def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offs
             
             # 3. 生成海报
             create_poster(
-                city=city,
-                country=country,
+                city=city if city else original_city,
+                country=country if country else original_country,
                 point=point,
                 dist=dist,
                 output_file=output_path,
@@ -139,25 +139,32 @@ async def generate_poster(
     road_width_scale: float = Form(1.0)
 ):
     # 地理编码：获取坐标 (增加超时时间到 10 秒)
+    # 改用 Photon (国内直连极其稳定，基于 OSM 开源数据)
     geolocator = Photon(user_agent="maptoposter-web")
     try:
-        location = geolocator.geocode(f"{city}, {country}", timeout=10)
+        # 强制请求英文结果，以便在海报上默认渲染极具设计感的英文字母
+        location = geolocator.geocode(f"{city}, {country}", timeout=10, language="en")
     except Exception as e:
         return HTMLResponse(content=f"<div class='text-red-500'>地理编码失败（网络超时）：{str(e)}。请重试。</div>")
-    
+
     if not location:
         return HTMLResponse(content="<div class='text-red-500'>错误：找不到该城市，请检查名称。</div>")
-    
+
     point = (location.latitude, location.longitude)
-    
-    # 检查中文字体需求
-    final_city = display_city if display_city else city
-    final_country = display_country if display_country else country
-    
+
+    # 从地理编码结果中提取标准的英文名称 (如果提取不到，则回退到用户输入的名称)
+    props = location.raw.get("properties", {})
+    en_city = props.get("name") or props.get("city") or city
+    en_country = props.get("country", country)
+
+    # 检查中文字体需求：如果用户显式填写了显示文字，用用户的；否则用自动获取的英文名
+    final_city = display_city if display_city else en_city
+    final_country = display_country if display_country else en_country
+
     active_fonts = None
     if has_chinese(final_city + final_country):
         active_fonts = load_fonts("Noto Sans SC")
-    
+
     # 生成文件名
     timestamp = int(asyncio.get_event_loop().time())
     city_slug = city.lower().replace(" ", "_")
@@ -182,7 +189,9 @@ async def generate_poster(
         map_y_offset=map_y_offset,
         active_fonts=active_fonts,
         theme=theme,
-        road_width_scale=road_width_scale
+        road_width_scale=road_width_scale,
+        original_city=en_city,
+        original_country=en_country
     )
     
     # 返回轮询组件
