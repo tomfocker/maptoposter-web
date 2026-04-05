@@ -11,436 +11,102 @@ Generate beautiful, minimalist map posters for any city in the world. Now with a
 
 相比原版的纯 CLI 工具，本增强版提供了极致的“开箱即用”体验：
 
-- 🚀 **开箱即用的 Docker 支持**：无需再痛苦地在本地编译安装 `GDAL`、`GEOS` 等复杂的地理库，一个 `docker-compose up -d` 即可在任意系统上运行。
-- 🖥️ **现代化的 Web 仪表盘**：告别黑框框，通过直观的浏览器界面（`http://localhost:8000`）配置你的海报。
+- 🚀 **开箱即用的 Docker 支持**：无需再痛苦地在本地编译安装 `GDAL`、`GEOS` 等复杂的地理库，一个命令即可运行。
+- 🖥️ **现代化的 Web 仪表盘**：告别黑框框，通过直观的浏览器界面配置你的海报。
 - 🇨🇳 **深度中文本地化**：
-  - **搜索解耦**：底层支持通过中文搜索全球城市，即使输入中文（如“纽约”），依然能默认渲染出极具设计感的英文大写海报。
-  - **自定义中文字体**：如果强制输入中文显示，自动下载并挂载 `Noto Sans SC`（思源黑体），彻底告别乱码方块。
-  - **主题意译**：47 款绝美主题（包含 30+ 中国特色城市主题）全部进行了中文意译，如下拉框直接显示“日式水墨”、“午夜深蓝”等。
-- 🎨 **主题色彩预览**：选择主题时，下拉框会直观地显示该主题的“背景、道路、水系、公园”四色调色板。
-- ⏱️ **HTMX 实时日志进度条**：由于下载地图瓦片极度耗时，我们通过拦截 Python `stdout` 并在前端进行秒级轮询，让你实时看到下载、渲染进度，消除等待焦虑。
-- 📐 **高级构图微调**：支持 X/Y 轴视口偏移、道路粗细缩放、自定义画布尺寸（如 9x16 手机壁纸）以及多格式导出（PNG, PDF, SVG）。
-- 🖼️ **竖版历史记录墙**：生成的历史海报采用完整的竖版网格展示，一键下载原图。
+  - **搜索解耦**：底层支持通过中文搜索全球城市，并自动提取标准英文名进行极具设计感的排版渲染。
+  - **中文字体支持**：支持手动覆盖海报文字为中文，并自动加载思源黑体，解决乱码问题。
+  - **主题翻译**：内置 47 款绝美主题（含 30+ 中国特色主题）全部经过中文意译。
+- 🎨 **色彩预览与构图微调**：实时预览主题色调，支持 X/Y 轴偏移、道路缩放及多种画布尺寸（如手机壁纸）。
+- ⏱️ **实时进度反馈**：采用 HTMX 轮询技术，在网页上实时展示下载、渲染日志，生成过程不再是黑盒。
+
+---
 
 ## 🚀 快速开始 (Quick Start)
 
-### 使用 Docker (强烈推荐)
+### 方案 A：使用 Docker Compose (强烈推荐)
 
-只要你的机器安装了 Docker 和 Docker Compose：
+这是最简单、最稳健的运行方式。
 
-1. **一键启动：**
-   ```bash
-   docker-compose up -d --build
+1. **下载或创建 `docker-compose.yml`**：
+   ```yaml
+   services:
+     maptoposter:
+       image: tomfocker/maptoposter-web:latest
+       container_name: maptoposter-web
+       ports:
+         - "8000:8000"
+       volumes:
+         - ./posters:/app/posters  # 海报输出目录
+         - ./cache:/app/cache      # 地图数据缓存目录
+       restart: always
    ```
-2. **访问 Web UI：**
-   打开浏览器访问 `http://localhost:8000`
 
-### 手动启动 (Python 环境)
+2. **启动服务**：
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **访问**：
+   打开浏览器访问 `http://localhost:8000` 即可开始创作。
+
+---
+
+### 方案 B：本地 Python 环境 (开发模式)
 
 如果你想在本地开发或不想使用 Docker：
 
-1. **安装依赖：**
+1. **安装依赖**：
    ```bash
    pip install -r requirements.txt
    ```
-2. **运行 FastAPI 应用：**
+2. **运行应用**：
    ```bash
    python app/main.py
    ```
 
-## 🛠️ CLI Features
+---
 
+## 📐 高级设置指南
 
-### With uv (Recommended)
+- **精准定位**：中文搜索强烈建议加上“市”、“县”或“区”后缀（如：`黄骅市`），以获得最精准的行政中心坐标。
+- **构图微调**：利用水平/垂直偏移功能，可以完美避开水印或让特定的河流、地标处于视觉中心。
+- **导出格式**：除了 PNG，本工具还支持 **PDF** 和 **SVG** 矢量格式，方便后期进行大幅面印刷或专业设计修改。
 
-Make sure [uv](https://docs.astral.sh/uv/) is installed. Running the script by prepending `uv run` automatically creates and manages a virtual environment.
+---
 
-```bash
-# First run will automatically install dependencies
-uv run ./create_map_poster.py --city "Paris" --country "France"
+## 🛠️ 关于原项目 (Original Project)
 
-# Or sync dependencies explicitly first (using locked versions)
-uv sync --locked
-uv run ./create_map_poster.py --city "Paris" --country "France"
-```
+本项目深度集成了 [originalankur/maptoposter](https://github.com/originalankur/maptoposter) 的渲染逻辑。
 
-### With pip + venv
-
-```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-## Usage
-
-### Generate Poster
-
-If you're using `uv`:
-
-```bash
-uv run ./create_map_poster.py --city <city> --country <country> [options]
-```
-
-Otherwise (pip + venv):
-
-```bash
-python create_map_poster.py --city <city> --country <country> [options]
-```
+<details>
+<summary>点击展开 CLI 原始参数参考 (For Advanced CLI Users)</summary>
 
 ### Required Options
-
 | Option | Short | Description |
 |--------|-------|-------------|
 | `--city` | `-c` | City name (used for geocoding) |
 | `--country` | `-C` | Country name (used for geocoding) |
 
 ### Optional Flags
-
 | Option | Short | Description | Default |
 |--------|-------|-------------|---------|
-| `--latitude` | `-lat` | Override latitude center point (use with --longitude) | |
-| `--longitude` | `-long` | Override longitude center point (use with --latitude) | |
-| `--country-label` | | Override country text displayed on poster | |
+| `--latitude` | `-lat` | Override latitude center point | |
+| `--longitude` | `-long` | Override longitude center point | |
 | `--theme` | `-t` | Theme name | `terracotta` |
 | `--distance` | `-d` | Map radius in meters | `18000` |
-| `--list-themes` | | List all available themes | |
-| `--all-themes` | | Generate posters for all available themes | |
-| `--width` | `-W` | Image width in inches | `12` (max: 20) |
-| `--height` | `-H` | Image height in inches | `16` (max: 20) |
-| `--map-x-offset` | `-mx` | Shift viewport left/right (−1.0 to +1.0) | `0.0` |
-| `--map-y-offset` | `-my` | Shift viewport up/down (−1.0 to +1.0) | `0.0` |
+| `--width` | `-W` | Image width in inches | `12` |
+| `--height` | `-H` | Image height in inches | `16` |
 
-### Multilingual Support - i18n
+更多高级 CLI 操作请参考原仓库文档。
+</details>
 
-Display city and country names in your language with custom fonts from google fonts:
+---
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--display-city` | `-dc` | Custom display name for city (e.g., "東京") |
-| `--display-country` | `-dC` | Custom display name for country (e.g., "日本") |
-| `--font-family` | | Google Fonts family name (e.g., "Noto Sans JP") |
+## 🤝 贡献与维护
 
-**Note**: Fonts are automatically downloaded from Google Fonts and cached locally in `fonts/cache/`. See [Multilingual Examples](#multilingual-examples-non-latin-scripts) below for full usage.
+如果你在使用过程中发现任何 Bug，或有新的主题建议，欢迎在 GitHub 上提交 Issue 或 Pull Request。
 
-### Resolution Guide (300 DPI)
-
-Use these values for `-W` and `-H` to target specific resolutions:
-
-| Target | Resolution (px) | Inches (-W / -H) |
-|--------|-----------------|------------------|
-| **Instagram Post** | 1080 x 1080 | 3.6 x 3.6 |
-| **Mobile Wallpaper** | 1080 x 1920 | 3.6 x 6.4 |
-| **HD Wallpaper** | 1920 x 1080 | 6.4 x 3.6 |
-| **4K Wallpaper** | 3840 x 2160 | 12.8 x 7.2 |
-| **A4 Print** | 2480 x 3508 | 8.3 x 11.7 |
-
-### Usage Examples
-
-#### Basic Examples
-
-```bash
-# Simple usage with default theme
-python create_map_poster.py -c "Paris" -C "France"
-
-# With custom theme and distance
-python create_map_poster.py -c "New York" -C "USA" -t noir -d 12000
-```
-
-#### Multilingual Examples (Non-Latin Scripts)
-
-Display city names in their native scripts:
-
-```bash
-# Japanese
-python create_map_poster.py -c "Tokyo" -C "Japan" -dc "東京" -dC "日本" --font-family "Noto Sans JP" -t japanese_ink
-
-# Korean
-python create_map_poster.py -c "Seoul" -C "South Korea" -dc "서울" -dC "대한민국" --font-family "Noto Sans KR" -t midnight_blue
-
-# Thai
-python create_map_poster.py -c "Bangkok" -C "Thailand" -dc "กรุงเทพมหานคร" -dC "ประเทศไทย" --font-family "Noto Sans Thai" -t sunset
-
-# Arabic
-python create_map_poster.py -c "Dubai" -C "UAE" -dc "دبي" -dC "الإمارات" --font-family "Cairo" -t terracotta
-
-# Chinese (Simplified) — with viewport offset to shift map center
-python create_map_poster.py -c "Beijing" -C "China" -dc "北京" -dC "中国" --font-family "Noto Sans SC" -t contrast_zones -d 25000
-
-# Khmer
-python create_map_poster.py -c "Phnom Penh" -C "Cambodia" -dc "ភ្នំពេញ" -dC "កម្ពុជា" --font-family "Noto Sans Khmer"
-```
-
-#### Advanced Examples
-
-```bash
-# Iconic grid patterns
-python create_map_poster.py -c "New York" -C "USA" -t noir -d 12000           # Manhattan grid
-python create_map_poster.py -c "Barcelona" -C "Spain" -t warm_beige -d 8000   # Eixample district
-
-# Waterfront & canals
-python create_map_poster.py -c "Venice" -C "Italy" -t blueprint -d 4000       # Canal network
-python create_map_poster.py -c "Amsterdam" -C "Netherlands" -t ocean -d 6000  # Concentric canals
-python create_map_poster.py -c "Dubai" -C "UAE" -t midnight_blue -d 15000     # Palm & coastline
-
-# Radial patterns
-python create_map_poster.py -c "Paris" -C "France" -t pastel_dream -d 10000   # Haussmann boulevards
-python create_map_poster.py -c "Moscow" -C "Russia" -t noir -d 12000          # Ring roads
-
-# Organic old cities
-python create_map_poster.py -c "Tokyo" -C "Japan" -t japanese_ink -d 15000    # Dense organic streets
-python create_map_poster.py -c "Marrakech" -C "Morocco" -t terracotta -d 5000 # Medina maze
-python create_map_poster.py -c "Rome" -C "Italy" -t warm_beige -d 8000        # Ancient layout
-
-# Coastal cities
-python create_map_poster.py -c "San Francisco" -C "USA" -t sunset -d 10000    # Peninsula grid
-python create_map_poster.py -c "Sydney" -C "Australia" -t ocean -d 12000      # Harbor city
-python create_map_poster.py -c "Mumbai" -C "India" -t contrast_zones -d 18000 # Coastal peninsula
-
-# River cities
-python create_map_poster.py -c "London" -C "UK" -t noir -d 15000              # Thames curves
-python create_map_poster.py -c "Budapest" -C "Hungary" -t copper_patina -d 8000  # Danube split
-
-# Override center coordinates
-python create_map_poster.py --city "New York" --country "USA" -lat 40.776676 -long -73.971321 -t noir
-
-# Chinese cities with new themes
-python create_map_poster.py -c "Shanghai" -C "China" -dc "上海" -dC "中国" --font-family "Noto Sans SC" -t neon_cyberpunk -d 20000
-python create_map_poster.py -c "Lhasa" -C "China" -dc "拉萨" -dC "西藏" --font-family "Noto Sans SC" -t tibetan_sky -d 20000
-python create_map_poster.py -c "Guyuan" -C "China" -dc "固原" -dC "宁夏" --font-family "Noto Sans SC" -t loess_jin -d 30000 -mx 0.167
-python create_map_poster.py -c "Qinhuangdao" -C "China" -dc "秦皇岛" -dC "河北" --font-family "Noto Sans SC" -t qinhuangdao_coast -d 40000 -my 0.25
-
-# List available themes
-python create_map_poster.py --list-themes
-
-# Generate posters for every theme
-python create_map_poster.py -c "Tokyo" -C "Japan" --all-themes
-```
-
-### Distance Guide
-
-| Distance | Best for |
-|----------|----------|
-| 4000-6000m | Small/dense cities (Venice, Amsterdam center) |
-| 8000-12000m | Medium cities, focused downtown (Paris, Barcelona) |
-| 15000-20000m | Large metros, full city view (Tokyo, Mumbai) |
-
-## Themes
-
-**47 themes** available in `themes/` directory (17 built-in + 30 Chinese city themes).
-
-### Built-in Themes (17)
-
-| Theme | Style |
-|-------|-------|
-| `gradient_roads` | Smooth gradient shading |
-| `contrast_zones` | High contrast urban density |
-| `noir` | Pure black background, white roads |
-| `midnight_blue` | Navy background with gold roads |
-| `blueprint` | Architectural blueprint aesthetic |
-| `neon_cyberpunk` | Dark with electric pink/cyan |
-| `warm_beige` | Vintage sepia tones |
-| `pastel_dream` | Soft muted pastels |
-| `japanese_ink` | Minimalist ink wash style |
-| `emerald`      | Lush dark green aesthetic |
-| `forest` | Deep greens and sage |
-| `ocean` | Blues and teals for coastal cities |
-| `terracotta` | Mediterranean warmth |
-| `sunset` | Warm oranges and pinks |
-| `autumn` | Seasonal burnt oranges and reds |
-| `copper_patina` | Oxidized copper aesthetic |
-| `monochrome_blue` | Single blue color family |
-
-### Chinese City Themes (30)
-
-Curated themes for Chinese geography and culture:
-
-`tibetan_sky` · `lhasa_crimson` · `gongga_glacial` · `peach_spring` · `steppe_sky` · `datong_coal` · `loess_jin` · `loess_gobi` · `jinshan_gold` · `guandi_red` · `tang_dynasty` · `ming_purple` · `sichuan_spice` · `mountain_city` · `shenzhen_tech` · `victoria_harbour` · `taihu_ink` · `min_river` · `xiamen_sea` · `lushan_mist` · `qinhuangdao_coast` · `chengde_forest` · `haihe_night` · `tengger_sand` · `spring_youth` · `grassland_blueprint` · `zhao_bronze` · `putuo_zen` · `winter_peaks` · `steppe_silver`
-
-## Output
-
-Posters are saved to `posters/` directory with format:
-
-```text
-{city}_{theme}_{YYYYMMDD_HHMMSS}.png
-```
-
-## Adding Custom Themes
-
-Create a JSON file in `themes/` directory:
-
-```json
-{
-  "name": "My Theme",
-  "description": "Description of the theme",
-  "bg": "#FFFFFF",
-  "text": "#000000",
-  "gradient_color": "#FFFFFF",
-  "water": "#C0C0C0",
-  "parks": "#F0F0F0",
-  "road_motorway": "#0A0A0A",
-  "road_primary": "#1A1A1A",
-  "road_secondary": "#2A2A2A",
-  "road_tertiary": "#3A3A3A",
-  "road_residential": "#4A4A4A",
-  "road_default": "#3A3A3A",
-
-  "road_width_scale": 1.5,
-  "bg_patina": true,
-  "bg_patina_color": "#40A880",
-  "bg_top": "#1A3A6A",
-  "bg_bottom": "#0A1A3A"
-}
-```
-
-| New Key | Type | Default | Description |
-|---------|------|---------|-------------|
-| `road_width_scale` | float | `1.0` | Multiply all road stroke widths |
-| `bg_patina` | bool | `false` | Subtle aged-texture overlay on background |
-| `bg_patina_color` | hex | `"#40A880"` | Tint color for patina (requires `bg_patina: true`) |
-| `bg_top` | hex | — | Top color of vertical background gradient |
-| `bg_bottom` | hex | — | Bottom color of vertical background gradient |
-
-## Project Structure
-
-```text
-map_poster/
-├── create_map_poster.py    # Main script
-├── font_management.py      # Font loading and Google Fonts integration
-├── themes/                 # Theme JSON files
-├── fonts/                  # Font files
-│   ├── Roboto-*.ttf        # Default Roboto fonts
-│   └── cache/              # Downloaded Google Fonts (auto-generated)
-├── posters/                # Generated posters
-└── README.md
-```
-
-
-## Hacker's Guide
-
-Quick reference for contributors who want to extend or modify the script.
-
-### Contributors Guide
-
-- Bug fixes are welcomed
-- Don't submit user interface (web/desktop)
-- Don't Dockerize for now
-- If you vibe code any fix please test it and see before and after version of poster
-- Before embarking on a big feature please ask in Discussions/Issue if it will be merged
-
-### Architecture Overview
-
-```text
-┌─────────────────┐     ┌──────────────┐     ┌─────────────────┐
-│   CLI Parser    │────▶│  Geocoding   │────▶│  Data Fetching  │
-│   (argparse)    │     │  (Nominatim) │     │    (OSMnx)      │
-└─────────────────┘     └──────────────┘     └─────────────────┘
-                                                     │
-                        ┌──────────────┐             ▼
-                        │    Output    │◀────┌─────────────────┐
-                        │  (matplotlib)│     │   Rendering     │
-                        └──────────────┘     │  (matplotlib)   │
-                                             └─────────────────┘
-```
-
-### Key Functions
-
-| Function | Purpose | Modify when... |
-|----------|---------|----------------|
-| `get_coordinates()` | City → lat/lon via Nominatim | Switching geocoding provider |
-| `create_poster()` | Main rendering pipeline | Adding new map layers |
-| `get_edge_colors_by_type()` | Road color by OSM highway tag | Changing road styling |
-| `get_edge_widths_by_type()` | Road width by importance | Adjusting line weights |
-| `create_gradient_fade()` | Top/bottom fade effect | Modifying gradient overlay |
-| `load_theme()` | JSON theme → dict | Adding new theme properties |
-| `is_latin_script()` | Detects script for typography | Supporting new scripts |
-| `load_fonts()` | Load custom/default fonts | Changing font loading logic |
-
-### Rendering Layers (z-order)
-
-```text
-z=11  Text labels (city, country, coords)
-z=10  Gradient fades (top & bottom)
-z=3   Roads (via ox.plot_graph)
-z=2   Parks (green polygons)
-z=1   Water (blue polygons)
-z=0   Background color
-```
-
-### OSM Highway Types → Road Hierarchy
-
-```python
-# In get_edge_colors_by_type() and get_edge_widths_by_type()
-motorway, motorway_link     → Thickest (1.2), darkest
-trunk, primary              → Thick (1.0)
-secondary                   → Medium (0.8)
-tertiary                    → Thin (0.6)
-residential, living_street  → Thinnest (0.4), lightest
-```
-
-### Typography & Script Detection
-
-The script automatically detects text scripts to apply appropriate typography:
-
-- **Latin scripts** (English, French, Spanish, etc.): Letter spacing applied for elegant "P  A  R  I  S" effect
-- **Non-Latin scripts** (Japanese, Arabic, Thai, Korean, etc.): Natural spacing for "東京" (no gaps between characters)
-
-Script detection uses Unicode ranges (U+0000-U+024F for Latin). If >80% of alphabetic characters are Latin, spacing is applied.
-
-### Adding New Features
-
-**New map layer (e.g., railways):**
-
-```python
-# In create_poster(), after parks fetch:
-try:
-    railways = ox.features_from_point(point, tags={'railway': 'rail'}, dist=dist)
-except:
-    railways = None
-
-# Then plot before roads:
-if railways is not None and not railways.empty:
-    railways = railways.to_crs(g_proj.graph["crs"])
-    railways.plot(ax=ax, color=THEME['railway'], linewidth=0.5, zorder=2.5)
-```
-
-**New theme property:**
-
-1. Add to theme JSON: `"railway": "#FF0000"`
-2. Use in code: `THEME['railway']`
-3. Add fallback in `load_theme()` default dict
-
-### Typography Positioning
-
-All text uses `transform=ax.transAxes` (0-1 normalized coordinates):
-
-```text
-y=0.14  City name (spaced letters for Latin scripts)
-y=0.125 Decorative line
-y=0.10  Country name
-y=0.07  Coordinates
-y=0.02  Attribution (bottom-right)
-```
-
-### Useful OSMnx Patterns
-
-```python
-# Get all buildings
-buildings = ox.features_from_point(point, tags={'building': True}, dist=dist)
-
-# Get specific amenities
-cafes = ox.features_from_point(point, tags={'amenity': 'cafe'}, dist=dist)
-
-# Different network types
-G = ox.graph_from_point(point, dist=dist, network_type='drive')  # roads only
-G = ox.graph_from_point(point, dist=dist, network_type='bike')   # bike paths
-G = ox.graph_from_point(point, dist=dist, network_type='walk')   # pedestrian
-```
-
-### Performance Tips
-
-- Large `dist` values (>20km) = slow downloads + memory heavy
-- Cache coordinates locally to avoid Nominatim rate limits
-- Use `network_type='drive'` instead of `'all'` for faster renders
-- Reduce `dpi` from 300 to 150 for quick previews
-
+- **Author**: tomfocker
+- **Core Engine**: originalankur
+- **License**: MIT
