@@ -14,7 +14,7 @@ from typing import List
 from create_map_poster import get_available_themes, create_poster, load_theme
 from font_management import load_fonts
 import create_map_poster
-from geopy.geocoders import Photon
+from geopy.geocoders import Nominatim
 import osmnx as ox
 
 # 配置 OSMnx：开启控制台日志并使用默认设置
@@ -139,11 +139,11 @@ async def generate_poster(
     road_width_scale: float = Form(1.0)
 ):
     # 地理编码：获取坐标 (增加超时时间到 10 秒)
-    # 改用 Photon (国内直连极其稳定，基于 OSM 开源数据)
-    geolocator = Photon(user_agent="maptoposter-web")
+    # 恢复使用 Nominatim 并指定未被 GFW 封锁的镜像节点 (qgis.org)，确保中英文解析均精准
+    geolocator = Nominatim(domain='nominatim.qgis.org', scheme='https', user_agent="maptoposter-web")
     try:
         # 强制请求英文结果，以便在海报上默认渲染极具设计感的英文字母
-        location = geolocator.geocode(f"{city}, {country}", timeout=10, language="en")
+        location = geolocator.geocode(f"{city}, {country}", timeout=10, language="en", exactly_one=True, addressdetails=True)
     except Exception as e:
         return HTMLResponse(content=f"<div class='text-red-500'>地理编码失败（网络超时）：{str(e)}。请重试。</div>")
 
@@ -153,10 +153,9 @@ async def generate_poster(
     point = (location.latitude, location.longitude)
 
     # 从地理编码结果中提取标准的英文名称 (如果提取不到，则回退到用户输入的名称)
-    props = location.raw.get("properties", {})
-    en_city = props.get("name") or props.get("city") or city
-    en_country = props.get("country", country)
-
+    address = location.raw.get("address", {})
+    en_city = address.get("city") or address.get("town") or address.get("county") or address.get("village") or location.raw.get("name") or city
+    en_country = address.get("country", country)
     # 检查中文字体需求：如果用户显式填写了显示文字，用用户的；否则用自动获取的英文名
     final_city = display_city if display_city else en_city
     final_country = display_country if display_country else en_country
