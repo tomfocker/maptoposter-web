@@ -102,6 +102,56 @@ def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offs
             TASKS_STATE[task_id]["status"] = "error"
             TASKS_STATE[task_id]["log"] = str(e)
 
+# --- 主题中文翻译 ---
+THEME_TRANSLATIONS = {
+    "gradient_roads": "渐变公路",
+    "contrast_zones": "高对比度",
+    "noir": "黑白电影",
+    "midnight_blue": "午夜深蓝",
+    "blueprint": "建筑蓝图",
+    "japanese_ink": "日式水墨",
+    "emerald": "翡翠绿",
+    "forest": "幽邃森林",
+    "ocean": "深海蓝",
+    "terracotta": "地中海陶红",
+    "sunset": "晚霞日落",
+    "autumn": "深秋落叶",
+    "copper_patina": "青铜氧化",
+    "monochrome_blue": "单色纯蓝",
+    "pastel_dream": "马卡龙梦境",
+    "warm_beige": "复古米黄",
+    "tibetan_sky": "藏地天空",
+    "lhasa_crimson": "拉萨暗红",
+    "gongga_glacial": "贡嘎冰川",
+    "peach_spring": "世外桃源",
+    "steppe_sky": "草原长空",
+    "datong_coal": "大同煤黑",
+    "loess_jin": "晋商黄土",
+    "loess_gobi": "西北戈壁",
+    "jinshan_gold": "金山璀璨",
+    "guandi_red": "关帝赤红",
+    "tang_dynasty": "大唐长安",
+    "ming_purple": "大明紫金",
+    "sichuan_spice": "蜀地麻辣",
+    "mountain_city": "雾都山城",
+    "shenzhen_tech": "深圳科技",
+    "victoria_harbour": "维港之夜",
+    "taihu_ink": "太湖水墨",
+    "min_river": "闽江之波",
+    "xiamen_sea": "厦门海韵",
+    "lushan_mist": "庐山云雾",
+    "qinhuangdao_coast": "夏日海岸",
+    "chengde_forest": "避暑山庄",
+    "haihe_night": "海河夜色",
+    "tengger_sand": "腾格里沙漠",
+    "spring_youth": "青春初春",
+    "grassland_blueprint": "草原蓝图",
+    "zhao_bronze": "赵国青铜",
+    "putuo_zen": "普陀禅意",
+    "winter_peaks": "凛冬雪峰",
+    "steppe_silver": "草原晨银",
+}
+
 @app.get("/")
 async def index(request: Request):
     themes = get_available_themes()
@@ -109,9 +159,11 @@ async def index(request: Request):
     for t in themes:
         try:
             theme_data = load_theme(t)
+            # 优先使用预设的中文翻译，否则读取 JSON 内的名字，最后回退到文件名
+            display_name = THEME_TRANSLATIONS.get(t, theme_data.get("_name", theme_data.get("name", t.capitalize())))
             theme_details.append({
                 "id": t,
-                "name": theme_data.get("_name", t.capitalize()),
+                "name": display_name,
                 "colors": [
                     theme_data.get("bg", "#fff"),
                     theme_data.get("road_primary", "#333"),
