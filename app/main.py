@@ -259,11 +259,14 @@ async def get_history(request: Request):
     html = ""
     for f in files:
         html += f"""
-        <div class="group relative">
-            <img src="/posters/{f}" class="w-full h-32 object-cover rounded shadow-sm group-hover:opacity-75 transition">
-            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <a href="/posters/{f}" download class="bg-white/90 p-1 rounded-full shadow text-blue-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+        <div class="group relative bg-gray-50 border rounded-lg p-2 flex flex-col items-center">
+            <div class="w-full h-64 overflow-hidden rounded mb-2 bg-white flex items-center justify-center">
+                <img src="/posters/{f}" class="max-h-full max-w-full object-contain shadow-sm group-hover:scale-105 transition duration-300">
+            </div>
+            <p class="text-[10px] text-gray-500 truncate w-full text-center mb-2 px-2" title="{f}">{f}</p>
+            <div class="w-full">
+                <a href="/posters/{f}" download class="block w-full text-center bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-700 text-xs py-2 rounded transition">
+                    下载高清原图
                 </a>
             </div>
         </div>
