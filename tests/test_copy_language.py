@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -10,4 +11,4 @@ def test_index_template_exposes_copy_language_selector():
 
 def test_index_template_defaults_copy_language_to_english():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
-    assert 'option value="en" selected' in template
+    assert re.search(r'<option\b[^>]*value="en"[^>]*selected', template)
