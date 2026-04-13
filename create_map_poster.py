@@ -31,6 +31,9 @@ from networkx import MultiDiGraph
 from shapely.geometry import Point
 from tqdm import tqdm
 
+from app.cache_index import CacheEntry, find_covering_entry, load_cache_index, save_cache_index
+from app.cache_runtime import load_pickle_from_path, register_layer_cache
+from app.cache_coverage import normalize_point
 from font_management import load_fonts
 
 # Configure osmnx to respect HTTP_PROXY / HTTPS_PROXY environment variables
@@ -50,6 +53,7 @@ class CacheError(Exception):
 CACHE_DIR_PATH = os.environ.get("CACHE_DIR", "cache")
 CACHE_DIR = Path(CACHE_DIR_PATH)
 CACHE_DIR.mkdir(exist_ok=True)
+CACHE_INDEX_PATH = CACHE_DIR / "index.json"
 
 THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
@@ -116,6 +120,39 @@ def cache_set(key: str, value):
             pickle.dump(value, f, protocol=pickle.HIGHEST_PROTOCOL)
     except Exception as e:
         raise CacheError(f"Cache write failed: {e}") from e
+
+
+def _index_key(point: tuple[float, float]) -> str:
+    lat, lon = normalize_point(point)
+    return f"{lat:.5f},{lon:.5f}"
+
+
+def _find_reusable_cached_data(layer_name: str, point: tuple[float, float], dist: float):
+    index = load_cache_index(CACHE_INDEX_PATH)
+    point_key = _index_key(point)
+    layer_entries = index.get(point_key, {}).get(layer_name, [])
+    entries = [
+        CacheEntry(center=tuple(entry["center"]), fetch_dist=entry["fetch_dist"], path=entry["path"])
+        for entry in layer_entries
+        if Path(entry["path"]).exists()
+    ]
+    match = find_covering_entry(entries, required_fetch_dist=dist)
+    if match is None:
+        return None
+    print(f"✓ Reusing cached {layer_name} coverage from {match.path}")
+    return load_pickle_from_path(match.path)
+
+
+def _register_cached_data(layer_name: str, point: tuple[float, float], dist: float, path: str) -> None:
+    index = load_cache_index(CACHE_INDEX_PATH)
+    register_layer_cache(
+        index=index,
+        center=point,
+        layer_name=layer_name,
+        fetch_dist=dist,
+        path=path,
+    )
+    save_cache_index(CACHE_INDEX_PATH, index)
 
 
 # Font loading now handled by font_management.py module
@@ -532,6 +569,10 @@ def fetch_graph(point, dist) -> MultiDiGraph | None:
         print("✓ Using cached street network")
         return cast(MultiDiGraph, cached)
 
+    reusable = _find_reusable_cached_data("graph", point, dist)
+    if reusable is not None:
+        return cast(MultiDiGraph, reusable)
+
     # Apply a hard read-timeout so slow Overpass streams don't hang forever.
     # ox.settings.requests_timeout is the actual HTTP request timeout used by osmnx.
     # ox.settings.timeout only controls the Overpass QL [timeout:N] server-side setting.
@@ -543,6 +584,7 @@ def fetch_graph(point, dist) -> MultiDiGraph | None:
         time.sleep(0.5)
         try:
             cache_set(graph, g)
+            _register_cached_data("graph", point, dist, _cache_path(graph))
         except CacheError as e:
             print(e)
         return g
@@ -589,6 +631,10 @@ def fetch_features(point, dist, tags, name, max_dist: int | None = None,
         print(f"✓ Using cached {name}")
         return cast(GeoDataFrame, cached)
 
+    reusable = _find_reusable_cached_data(name, point, effective_dist)
+    if reusable is not None:
+        return cast(GeoDataFrame, reusable)
+
     # Temporarily override osmnx HTTP timeout.
     # ox.settings.requests_timeout is the actual HTTP request timeout.
     # ox.settings.timeout only sets the Overpass QL [timeout:N] server-side param.
@@ -624,6 +670,7 @@ def fetch_features(point, dist, tags, name, max_dist: int | None = None,
                 time.sleep(0.3)
                 try:
                     cache_set(features, data)
+                    _register_cached_data(name, point, effective_dist, _cache_path(features))
                 except CacheError as e:
                     print(e)
                 return data

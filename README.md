@@ -52,6 +52,24 @@ Generate beautiful, minimalist map posters for any city in the world. Now with a
 
 ---
 
+### 方案 A-1：使用中国主要城市离线缓存模式
+
+如果你希望首次启动就内置中国主要城市的常用地图缓存，同时继续保留在线补全能力，可以使用：
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.offline-cn.yml up -d
+```
+
+此模式会通过命名卷初始化离线缓存数据。后续如果你请求了离线包之外的城市或更大的地图范围，程序仍会继续在线下载并把新数据写回缓存卷。
+
+这里的 `distance`/`dist` 表示海报的地图范围参数，而不是严格的真实半径。推荐区间与原项目保持一致：
+
+- `4000-6000`：小而密的城市中心
+- `8000-12000`：中等城市或聚焦 downtown
+- `15000-20000`：大都市更完整的城市视图
+
+---
+
 ### 方案 B：本地 Python 环境 (开发模式)
 
 如果你想在本地开发或不想使用 Docker：
@@ -94,7 +112,7 @@ Generate beautiful, minimalist map posters for any city in the world. Now with a
 | `--latitude` | `-lat` | Override latitude center point | |
 | `--longitude` | `-long` | Override longitude center point | |
 | `--theme` | `-t` | Theme name | `terracotta` |
-| `--distance` | `-d` | Map radius in meters | `18000` |
+| `--distance` | `-d` | Poster map range parameter | `18000` |
 | `--width` | `-W` | Image width in inches | `12` |
 | `--height` | `-H` | Image height in inches | `16` |
 
