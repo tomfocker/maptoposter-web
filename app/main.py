@@ -8,7 +8,6 @@ import asyncio
 import sys
 import io
 import uuid
-import re
 import logging
 from threading import Lock
 from typing import List
@@ -17,6 +16,7 @@ from font_management import load_fonts
 import create_map_poster
 from geopy.geocoders import Nominatim
 import osmnx as ox
+from app.poster_copy import choose_poster_labels, has_chinese
 
 # 配置 OSMnx：开启控制台日志并使用默认设置
 ox.settings.log_console = True
@@ -65,24 +65,6 @@ class ErrorCapture(io.StringIO):
                 TASKS_STATE[self.task_id]["log"] = s.strip()
         super().write(s)
         sys.__stderr__.write(s)
-
-def has_chinese(text: str) -> bool:
-    if not text: return False
-    return bool(re.search(r'[\u4e00-\u9fff]', text))
-
-
-def choose_poster_labels(
-    copy_language: str,
-    display_city: str,
-    display_country: str,
-    english_city: str,
-    english_country: str,
-    chinese_city: str,
-    chinese_country: str,
-) -> tuple[str, str]:
-    auto_city = chinese_city if copy_language == "zh" and chinese_city else english_city
-    auto_country = chinese_country if copy_language == "zh" and chinese_country else english_country
-    return display_city or auto_city, display_country or auto_country
 
 from contextlib import redirect_stdout, redirect_stderr
 
