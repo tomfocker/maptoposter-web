@@ -6,6 +6,8 @@ import sys
 import types
 from pathlib import Path
 
+import pytest
+
 
 def _module(name: str, **attrs):
     module = types.ModuleType(name)
@@ -13,70 +15,63 @@ def _module(name: str, **attrs):
     return module
 
 
-def _install_import_stubs():
-    if "fastapi" not in sys.modules:
-        class _FastAPI:
-            def __init__(self, *args, **kwargs):
-                pass
+@pytest.fixture
+def app_main(monkeypatch):
+    class _FastAPI:
+        def __init__(self, *args, **kwargs):
+            pass
 
-            def mount(self, *args, **kwargs):
-                return None
+        def mount(self, *args, **kwargs):
+            return None
 
-            def get(self, *args, **kwargs):
-                return lambda func: func
+        def get(self, *args, **kwargs):
+            return lambda func: func
 
-            def post(self, *args, **kwargs):
-                return lambda func: func
+        def post(self, *args, **kwargs):
+            return lambda func: func
 
-        class _Jinja2Templates:
-            def __init__(self, *args, **kwargs):
-                pass
+    class _Jinja2Templates:
+        def __init__(self, *args, **kwargs):
+            pass
 
-            def TemplateResponse(self, *args, **kwargs):
-                return {"args": args, "kwargs": kwargs}
+        def TemplateResponse(self, *args, **kwargs):
+            return {"args": args, "kwargs": kwargs}
 
-        class _StaticFiles:
-            def __init__(self, *args, **kwargs):
-                pass
+    class _StaticFiles:
+        def __init__(self, *args, **kwargs):
+            pass
 
-        class _HTMLResponse:
-            def __init__(self, content="", *args, **kwargs):
-                self.content = content
+    class _HTMLResponse:
+        def __init__(self, content="", *args, **kwargs):
+            self.content = content
 
-        sys.modules["fastapi"] = _module(
+    geocoders = _module(
+        "geopy.geocoders",
+        Nominatim=type("Nominatim", (), {"__init__": lambda self, *args, **kwargs: None, "geocode": lambda self, *args, **kwargs: None}),
+    )
+
+    stub_modules = {
+        "fastapi": _module(
             "fastapi",
             FastAPI=_FastAPI,
             Request=object,
             BackgroundTasks=object,
             Form=lambda default=None, *args, **kwargs: default,
-        )
-        sys.modules["fastapi.templating"] = _module("fastapi.templating", Jinja2Templates=_Jinja2Templates)
-        sys.modules["fastapi.staticfiles"] = _module("fastapi.staticfiles", StaticFiles=_StaticFiles)
-        sys.modules["fastapi.responses"] = _module("fastapi.responses", HTMLResponse=_HTMLResponse)
-
-    sys.modules.setdefault(
-        "create_map_poster",
-        _module(
+        ),
+        "fastapi.templating": _module("fastapi.templating", Jinja2Templates=_Jinja2Templates),
+        "fastapi.staticfiles": _module("fastapi.staticfiles", StaticFiles=_StaticFiles),
+        "fastapi.responses": _module("fastapi.responses", HTMLResponse=_HTMLResponse),
+        "create_map_poster": _module(
             "create_map_poster",
             THEME={},
             get_available_themes=lambda: [],
             create_poster=lambda *args, **kwargs: None,
             load_theme=lambda *args, **kwargs: {},
         ),
-    )
-    sys.modules.setdefault("font_management", _module("font_management", load_fonts=lambda *args, **kwargs: ["stub-font"]))
-
-    if "geopy" not in sys.modules:
-        geocoders = _module(
-            "geopy.geocoders",
-            Nominatim=type("Nominatim", (), {"__init__": lambda self, *args, **kwargs: None, "geocode": lambda self, *args, **kwargs: None}),
-        )
-        sys.modules["geopy"] = _module("geopy", geocoders=geocoders)
-        sys.modules["geopy.geocoders"] = geocoders
-
-    sys.modules.setdefault(
-        "osmnx",
-        _module(
+        "font_management": _module("font_management", load_fonts=lambda *args, **kwargs: ["stub-font"]),
+        "geopy": _module("geopy", geocoders=geocoders),
+        "geopy.geocoders": geocoders,
+        "osmnx": _module(
             "osmnx",
             settings=types.SimpleNamespace(
                 log_console=False,
@@ -85,12 +80,18 @@ def _install_import_stubs():
                 requests_kwargs={},
             ),
         ),
-    )
+    }
 
+    monkeypatch.delitem(sys.modules, "app.main", raising=False)
+    for name, module in stub_modules.items():
+        monkeypatch.setitem(sys.modules, name, module)
 
-_install_import_stubs()
-
-app_main = importlib.import_module("app.main")
+    importlib.invalidate_caches()
+    module = importlib.import_module("app.main")
+    try:
+        yield module
+    finally:
+        monkeypatch.delitem(sys.modules, "app.main", raising=False)
 
 
 class RecordingBackgroundTasks:
@@ -120,7 +121,7 @@ def test_index_template_defaults_copy_language_to_english():
     assert re.search(r'<option\b[^>]*value="en"[^>]*selected', template)
 
 
-def test_generate_poster_uses_chinese_lookup_for_display_labels(monkeypatch):
+def test_generate_poster_uses_chinese_lookup_for_display_labels(app_main, monkeypatch):
     geocode_calls = []
 
     class FakeGeolocator:
@@ -156,7 +157,7 @@ def test_generate_poster_uses_chinese_lookup_for_display_labels(monkeypatch):
     assert "progress-container" in response.content
 
 
-def test_generate_poster_logs_and_falls_back_when_chinese_lookup_fails(monkeypatch, caplog):
+def test_generate_poster_logs_and_falls_back_when_chinese_lookup_fails(app_main, monkeypatch, caplog):
     class FakeGeolocator:
         def geocode(self, query, **kwargs):
             if kwargs["language"] == "en":
