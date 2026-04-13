@@ -1,5 +1,6 @@
 services:
   maptoposter:
+    # 离线增强版：主应用仍使用精简镜像，地图缓存通过命名卷复用并继续在线补全未命中的地区
     image: maptoposter-web:latest
     depends_on:
       cache-init:
@@ -9,6 +10,7 @@ services:
       - map_cache:/app/cache
 
   cache-init:
+    # 首次启动把离线种子填入卷，未命中时仍依赖在线补全以保证所有城市都能被渲染
     image: maptoposter-cache:cn-major-v1
     volumes:
       - map_cache:/app/cache

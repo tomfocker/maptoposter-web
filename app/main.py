@@ -8,7 +8,7 @@ import asyncio
 import sys
 import io
 import uuid
-import re
+import logging
 from threading import Lock
 from typing import List
 from create_map_poster import get_available_themes, create_poster, load_theme
@@ -16,6 +16,7 @@ from font_management import load_fonts
 import create_map_poster
 from geopy.geocoders import Nominatim
 import osmnx as ox
+from app.poster_copy import choose_poster_labels, has_chinese
 
 # 配置 OSMnx：开启控制台日志并使用默认设置
 ox.settings.log_console = True
@@ -36,6 +37,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/posters", StaticFiles(directory="posters"), name="posters")
 
 templates = Jinja2Templates(directory="app/templates")
+logger = logging.getLogger(__name__)
 
 # --- 任务状态管理与日志拦截 ---
 TASKS_STATE = {}
@@ -63,10 +65,6 @@ class ErrorCapture(io.StringIO):
                 TASKS_STATE[self.task_id]["log"] = s.strip()
         super().write(s)
         sys.__stderr__.write(s)
-
-def has_chinese(text: str) -> bool:
-    if not text: return False
-    return bool(re.search(r'[\u4e00-\u9fff]', text))
 
 from contextlib import redirect_stdout, redirect_stderr
 
@@ -185,6 +183,7 @@ async def generate_poster(
     country: str = Form(...),
     display_city: str = Form(""),
     display_country: str = Form(""),
+    copy_language: str = Form("en"),
     theme: str = Form("terracotta"),
     dist: int = Form(4000),
     dpi: int = Form(300),
@@ -222,9 +221,35 @@ async def generate_poster(
     en_city = address.get("city") or address.get("town") or address.get("county") or address.get("village") or location.raw.get("name") or city
     en_country = address.get("country", country)
 
-    # 检查中文字体需求：如果用户显式填写了显示文字，用用户的；否则用自动获取的英文名
-    final_city = display_city if display_city else en_city
-    final_country = display_country if display_country else en_country
+    zh_city = ""
+    zh_country = ""
+    if copy_language == "zh":
+        try:
+            zh_location = geolocator.geocode(
+                f"{city}, {country}",
+                timeout=10,
+                language="zh",
+                exactly_one=True,
+                addressdetails=True,
+            )
+            if zh_location:
+                zh_address = zh_location.raw.get("address", {})
+                zh_city = zh_address.get("city") or zh_address.get("town") or zh_address.get("county") or zh_address.get("village") or zh_location.raw.get("name") or ""
+                zh_country = zh_address.get("country", "")
+        except Exception:
+            logger.warning("Chinese display lookup failed for %s, %s", city, country, exc_info=True)
+            zh_city = ""
+            zh_country = ""
+
+    final_city, final_country = choose_poster_labels(
+        copy_language=copy_language,
+        display_city=display_city,
+        display_country=display_country,
+        english_city=en_city,
+        english_country=en_country,
+        chinese_city=zh_city,
+        chinese_country=zh_country,
+    )
 
     active_fonts = None
     if has_chinese(final_city + final_country):
@@ -245,8 +270,8 @@ async def generate_poster(
     background_tasks.add_task(
         run_poster_task,
         task_id=task_id,
-        city=display_city if display_city else None,
-        country=display_country if display_country else None,
+        city=final_city,
+        country=final_country,
         point=point,
         dist=dist,
         output_path=output_path,

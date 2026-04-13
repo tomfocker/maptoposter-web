@@ -41,6 +41,16 @@
                             <input type="text" name="display_country" placeholder="如: 中国" class="w-full border rounded px-3 py-2 text-sm">
                         </div>
                     </div>
+                    <div class="mt-4">
+                        <label class="block text-xs font-medium text-gray-700 mb-1">海报文案语言</label>
+                        <select name="copy_language" class="w-full border rounded px-3 py-2 text-sm">
+                            <option value="en" selected>英文（默认）</option>
+                            <option value="zh">中文</option>
+                        </select>
+                        <p class="mt-1 text-[11px] text-gray-500">
+                            默认保持英文文案；选中文后仅替换自动生成的城市/国家名称，手动填写的标题/副标题始终优先。
+                        </p>
+                    </div>
                 </div>
 
                 <!-- 主题选择 -->

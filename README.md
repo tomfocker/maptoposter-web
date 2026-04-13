@@ -70,6 +70,22 @@ docker compose -f docker-compose.yml -f docker-compose.offline-cn.yml up -d
 
 ---
 
+## 部署模式说明
+
+### 精简在线版
+
+- 使用 `tomfocker/maptoposter-web:latest`（或 `tomfocker/maptoposter-web:v*`）的云原生镜像即可启动。
+- 首次请求时会在线下载需要的地图数据，后续请求复用本地缓存目录，保持响应速度与稳定性。
+- 可选的 `中文文案` 模式不会强制改变默认英文输出，只要不主动切换就会保持老样子。
+
+### 离线增强版
+
+- 在精简在线版的基础上再加 `docker compose -f docker-compose.yml -f docker-compose.offline-cn.yml up -d`，通过命名卷和缓存初始化来沾满常用中国城市的离线数据。
+- `首次启动` 由 `cache-init` 服务把离线种子复制进命名卷，之后仍能 `在线补全` 未缓存的区域，确保地图数据不会缺失。
+- 同样支持可选的中文文案功能，英文仍为默认语言，中文只在有需求时启用。
+
+---
+
 ### 方案 B：本地 Python 环境 (开发模式)
 
 如果你想在本地开发或不想使用 Docker：
