@@ -9,6 +9,7 @@ import sys
 import io
 import uuid
 import re
+import logging
 from threading import Lock
 from typing import List
 from create_map_poster import get_available_themes, create_poster, load_theme
@@ -36,6 +37,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/posters", StaticFiles(directory="posters"), name="posters")
 
 templates = Jinja2Templates(directory="app/templates")
+logger = logging.getLogger(__name__)
 
 # --- 任务状态管理与日志拦截 ---
 TASKS_STATE = {}
@@ -253,6 +255,7 @@ async def generate_poster(
                 zh_city = zh_address.get("city") or zh_address.get("town") or zh_address.get("county") or zh_address.get("village") or zh_location.raw.get("name") or ""
                 zh_country = zh_address.get("country", "")
         except Exception:
+            logger.warning("Chinese display lookup failed for %s, %s", city, country, exc_info=True)
             zh_city = ""
             zh_country = ""
 
