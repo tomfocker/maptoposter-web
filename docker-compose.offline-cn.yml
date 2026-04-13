@@ -1,0 +1,28 @@
+services:
+  maptoposter:
+    image: maptoposter-web:latest
+    depends_on:
+      cache-init:
+        condition: service_completed_successfully
+    volumes:
+      - ./posters:/app/posters
+      - map_cache:/app/cache
+
+  cache-init:
+    image: maptoposter-cache:cn-major-v1
+    volumes:
+      - map_cache:/app/cache
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        if [ -z "$(ls -A /app/cache 2>/dev/null)" ]; then
+          cp -R /seed-cache/. /app/cache/
+          echo "Seeded offline cache into named volume."
+        else
+          echo "Cache volume already populated; skipping seed copy."
+        fi
+    restart: "no"
+
+volumes:
+  map_cache:
