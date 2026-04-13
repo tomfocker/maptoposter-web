@@ -1,0 +1,5 @@
+FROM alpine:3.22
+
+WORKDIR /seed-cache
+
+COPY offline-seed/cn-major-v1/ /seed-cache/
