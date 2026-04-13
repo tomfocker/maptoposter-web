@@ -68,6 +68,20 @@ def has_chinese(text: str) -> bool:
     if not text: return False
     return bool(re.search(r'[\u4e00-\u9fff]', text))
 
+
+def choose_poster_labels(
+    copy_language: str,
+    display_city: str,
+    display_country: str,
+    english_city: str,
+    english_country: str,
+    chinese_city: str,
+    chinese_country: str,
+) -> tuple[str, str]:
+    auto_city = chinese_city if copy_language == "zh" and chinese_city else english_city
+    auto_country = chinese_country if copy_language == "zh" and chinese_country else english_country
+    return display_city or auto_city, display_country or auto_country
+
 from contextlib import redirect_stdout, redirect_stderr
 
 def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale, original_city, original_country, width, height, output_format):
@@ -185,6 +199,7 @@ async def generate_poster(
     country: str = Form(...),
     display_city: str = Form(""),
     display_country: str = Form(""),
+    copy_language: str = Form("en"),
     theme: str = Form("terracotta"),
     dist: int = Form(4000),
     dpi: int = Form(300),
@@ -222,9 +237,34 @@ async def generate_poster(
     en_city = address.get("city") or address.get("town") or address.get("county") or address.get("village") or location.raw.get("name") or city
     en_country = address.get("country", country)
 
-    # 检查中文字体需求：如果用户显式填写了显示文字，用用户的；否则用自动获取的英文名
-    final_city = display_city if display_city else en_city
-    final_country = display_country if display_country else en_country
+    zh_city = ""
+    zh_country = ""
+    if copy_language == "zh":
+        try:
+            zh_location = geolocator.geocode(
+                f"{city}, {country}",
+                timeout=10,
+                language="zh",
+                exactly_one=True,
+                addressdetails=True,
+            )
+            if zh_location:
+                zh_address = zh_location.raw.get("address", {})
+                zh_city = zh_address.get("city") or zh_address.get("town") or zh_address.get("county") or zh_address.get("village") or zh_location.raw.get("name") or ""
+                zh_country = zh_address.get("country", "")
+        except Exception:
+            zh_city = ""
+            zh_country = ""
+
+    final_city, final_country = choose_poster_labels(
+        copy_language=copy_language,
+        display_city=display_city,
+        display_country=display_country,
+        english_city=en_city,
+        english_country=en_country,
+        chinese_city=zh_city,
+        chinese_country=zh_country,
+    )
 
     active_fonts = None
     if has_chinese(final_city + final_country):
@@ -245,8 +285,8 @@ async def generate_poster(
     background_tasks.add_task(
         run_poster_task,
         task_id=task_id,
-        city=display_city if display_city else None,
-        country=display_country if display_country else None,
+        city=final_city,
+        country=final_country,
         point=point,
         dist=dist,
         output_path=output_path,
