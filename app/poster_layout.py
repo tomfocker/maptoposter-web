@@ -42,13 +42,15 @@ def is_latin_script(text):
 
 def _chinese_title_scale(display_city: str) -> float:
     char_count = len(display_city.strip())
+    if char_count <= 2:
+        return 1.18
     if char_count <= 4:
-        return 1.12
+        return 1.10
     if char_count <= 6:
-        return 1.03
+        return 1.00
     if char_count <= 8:
-        return 0.94
-    return 0.86
+        return 0.91
+    return 0.84
 
 
 def build_poster_typography(display_city: str, display_country: str) -> PosterTypography:
@@ -72,15 +74,15 @@ def build_poster_typography(display_city: str, display_country: str) -> PosterTy
     return PosterTypography(
         city_text=display_city,
         country_text=display_country,
-        city_y=0.148,
-        country_y=0.094,
-        coords_y=0.058,
-        divider_y=0.121,
-        divider_start=0.435,
-        divider_end=0.565,
+        city_y=0.156,
+        country_y=0.089,
+        coords_y=0.047,
+        divider_y=0.118,
+        divider_start=0.445,
+        divider_end=0.555,
         title_scale=_chinese_title_scale(display_city),
-        subtitle_scale=0.9,
-        divider_linewidth_scale=0.85,
+        subtitle_scale=0.94,
+        divider_linewidth_scale=0.78,
         title_shrink_threshold=6,
         min_title_size=18.0,
     )
