@@ -6,6 +6,7 @@ def test_readme_mentions_slim_and_offline_enhanced_modes():
     assert "精简在线版" in readme
     assert "离线增强版" in readme
     assert "中文文案" in readme
+    assert "京華老宋体" in readme
 
 
 def test_offline_compose_documents_seeded_cache_behavior():

@@ -34,6 +34,7 @@ from tqdm import tqdm
 from app.cache_index import CacheEntry, find_covering_entry, load_cache_index, save_cache_index
 from app.cache_runtime import load_pickle_from_path, register_layer_cache
 from app.cache_coverage import normalize_point
+from app.poster_layout import build_poster_typography
 from font_management import load_fonts
 
 # Configure osmnx to respect HTTP_PROXY / HTTPS_PROXY environment variables
@@ -156,40 +157,6 @@ def _register_cached_data(layer_name: str, point: tuple[float, float], dist: flo
 
 
 # Font loading now handled by font_management.py module
-
-
-def is_latin_script(text):
-    """
-    Check if text is primarily Latin script.
-    Used to determine if letter-spacing should be applied to city names.
-
-    :param text: Text to analyze
-    :return: True if text is primarily Latin script, False otherwise
-    """
-    if not text:
-        return True
-
-    latin_count = 0
-    total_alpha = 0
-
-    for char in text:
-        if char.isalpha():
-            total_alpha += 1
-            # Latin Unicode ranges:
-            # - Basic Latin: U+0000 to U+007F
-            # - Latin-1 Supplement: U+0080 to U+00FF
-            # - Latin Extended-A: U+0100 to U+017F
-            # - Latin Extended-B: U+0180 to U+024F
-            if ord(char) < 0x250:
-                latin_count += 1
-
-    # If no alphabetic characters, default to Latin (numbers, symbols, etc.)
-    if total_alpha == 0:
-        return True
-
-    # Consider it Latin if >80% of alphabetic characters are Latin
-    return (latin_count / total_alpha) > 0.8
-
 
 def generate_output_filename(city, theme_name, output_format):
     """
@@ -877,16 +844,24 @@ def create_poster(
 
     # 4. Typography - use custom fonts if provided, otherwise use default FONTS
     active_fonts = fonts or FONTS
+    typography = build_poster_typography(display_city, display_country)
+
     if active_fonts:
-        # font_main is calculated dynamically later based on length
+        title_font_path = active_fonts.get("title") or active_fonts["bold"]
+        subtitle_font_path = active_fonts.get("subtitle") or active_fonts.get("light") or active_fonts["regular"]
+        coords_font_path = active_fonts.get("meta_regular") or active_fonts.get("regular") or active_fonts["bold"]
+        attr_font_path = active_fonts.get("meta_light") or active_fonts.get("light") or coords_font_path
         font_sub = FontProperties(
-            fname=active_fonts["light"], size=base_sub * scale_factor
+            fname=subtitle_font_path,
+            size=base_sub * scale_factor * typography.subtitle_scale,
         )
         font_coords = FontProperties(
-            fname=active_fonts["regular"], size=base_coords * scale_factor
+            fname=coords_font_path,
+            size=base_coords * scale_factor,
         )
         font_attr = FontProperties(
-            fname=active_fonts["light"], size=base_attr * scale_factor
+            fname=attr_font_path,
+            size=base_attr * scale_factor,
         )
     else:
         # Fallback to system fonts
@@ -898,32 +873,23 @@ def create_poster(
         )
         font_attr = FontProperties(family="monospace", size=base_attr * scale_factor)
 
-    # Format city name based on script type
-    # Latin scripts: apply uppercase and letter spacing for aesthetic
-    # Non-Latin scripts (CJK, Thai, Arabic, etc.): no spacing, preserve case structure
-    if is_latin_script(display_city):
-        # Latin script: uppercase with letter spacing (e.g., "P  A  R  I  S")
-        spaced_city = "  ".join(list(display_city.upper()))
-    else:
-        # Non-Latin script: no spacing, no forced uppercase
-        # For scripts like Arabic, Thai, Japanese, etc.
-        spaced_city = display_city
-
     # Dynamically adjust font size based on city name length to prevent truncation
     # We use the already scaled "main" font size as the starting point.
-    base_adjusted_main = base_main * scale_factor
+    base_adjusted_main = base_main * scale_factor * typography.title_scale
     city_char_count = len(display_city)
 
-    # Heuristic: If length is > 10, start reducing.
-    if city_char_count > 10:
-        length_factor = 10 / city_char_count
-        adjusted_font_size = max(base_adjusted_main * length_factor, 10 * scale_factor)
+    if city_char_count > typography.title_shrink_threshold:
+        length_factor = typography.title_shrink_threshold / city_char_count
+        adjusted_font_size = max(
+            base_adjusted_main * length_factor,
+            typography.min_title_size * scale_factor,
+        )
     else:
         adjusted_font_size = base_adjusted_main
 
     if active_fonts:
         font_main_adjusted = FontProperties(
-            fname=active_fonts["bold"], size=adjusted_font_size
+            fname=title_font_path, size=adjusted_font_size
         )
     else:
         font_main_adjusted = FontProperties(
@@ -933,8 +899,8 @@ def create_poster(
     # --- BOTTOM TEXT ---
     ax.text(
         0.5,
-        0.14,
-        spaced_city,
+        typography.city_y,
+        typography.city_text,
         transform=ax.transAxes,
         color=THEME["text"],
         ha="center",
@@ -944,8 +910,8 @@ def create_poster(
 
     ax.text(
         0.5,
-        0.10,
-        display_country.upper(),
+        typography.country_y,
+        typography.country_text,
         transform=ax.transAxes,
         color=THEME["text"],
         ha="center",
@@ -964,7 +930,7 @@ def create_poster(
 
     ax.text(
         0.5,
-        0.07,
+        typography.coords_y,
         coords,
         transform=ax.transAxes,
         color=THEME["text"],
@@ -975,16 +941,18 @@ def create_poster(
     )
 
     ax.plot(
-        [0.4, 0.6],
-        [0.125, 0.125],
+        [typography.divider_start, typography.divider_end],
+        [typography.divider_y, typography.divider_y],
         transform=ax.transAxes,
         color=THEME["text"],
-        linewidth=1 * scale_factor,
+        linewidth=typography.divider_linewidth_scale * scale_factor,
         zorder=11,
     )
 
     # --- ATTRIBUTION (bottom right) ---
-    if FONTS:
+    if active_fonts:
+        font_attr = FontProperties(fname=attr_font_path, size=8)
+    elif FONTS:
         font_attr = FontProperties(fname=FONTS["light"], size=8)
     else:
         font_attr = FontProperties(family="monospace", size=8)

@@ -253,7 +253,7 @@ async def generate_poster(
 
     active_fonts = None
     if has_chinese(final_city + final_country):
-        active_fonts = load_fonts("Noto Sans SC")
+        active_fonts = load_fonts("poster_zh_cn")
 
     # 生成文件名
     timestamp = int(asyncio.get_event_loop().time())

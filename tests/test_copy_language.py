@@ -153,7 +153,7 @@ def test_generate_poster_uses_chinese_lookup_for_display_labels(app_main, monkey
     assert task_kwargs["country"] == "中国"
     assert task_kwargs["original_city"] == "Shanghai"
     assert task_kwargs["original_country"] == "China"
-    assert task_kwargs["active_fonts"] == ["Noto Sans SC"]
+    assert task_kwargs["active_fonts"] == ["poster_zh_cn"]
     assert "progress-container" in response.content
 
 
@@ -185,3 +185,31 @@ def test_generate_poster_logs_and_falls_back_when_chinese_lookup_fails(app_main,
     assert task_kwargs["country"] == "France"
     assert task_kwargs["active_fonts"] is None
     assert "Chinese display lookup failed" in caplog.text
+
+
+def test_generate_poster_uses_chinese_font_preset_for_manual_chinese_override(app_main, monkeypatch):
+    class FakeGeolocator:
+        def geocode(self, query, **kwargs):
+            return FakeLocation(31.23, 121.47, {"city": "Shanghai", "country": "China"})
+
+    background_tasks = RecordingBackgroundTasks()
+
+    monkeypatch.setattr(app_main, "Nominatim", lambda *args, **kwargs: FakeGeolocator())
+    monkeypatch.setattr(app_main, "load_fonts", lambda font_name: [font_name])
+
+    asyncio.run(
+        app_main.generate_poster(
+            request=object(),
+            background_tasks=background_tasks,
+            city="Shanghai",
+            country="China",
+            copy_language="en",
+            display_city="上海",
+            display_country="中国",
+        )
+    )
+
+    _, task_kwargs = background_tasks.calls[0]
+    assert task_kwargs["city"] == "上海"
+    assert task_kwargs["country"] == "中国"
+    assert task_kwargs["active_fonts"] == ["poster_zh_cn"]

@@ -12,6 +12,33 @@ import requests
 
 FONTS_DIR = "fonts"
 FONTS_CACHE_DIR = Path(FONTS_DIR) / "cache"
+CHINESE_POSTER_FONT_PRESET = "poster_zh_cn"
+
+
+def _load_local_font_bundle(font_family: str) -> Optional[dict]:
+    preset = font_family.lower()
+    if preset != CHINESE_POSTER_FONT_PRESET:
+        return None
+
+    title_font = os.path.join(FONTS_DIR, "JingHuaLaoSong-v3.0.ttf")
+    meta_regular = os.path.join(FONTS_DIR, "Roboto-Regular.ttf")
+    meta_light = os.path.join(FONTS_DIR, "Roboto-Light.ttf")
+
+    required_paths = [title_font, meta_regular, meta_light]
+    for path in required_paths:
+        if not os.path.exists(path):
+            print(f"⚠ Font not found: {path}")
+            return None
+
+    return {
+        "title": title_font,
+        "subtitle": title_font,
+        "meta_regular": meta_regular,
+        "meta_light": meta_light,
+        "bold": title_font,
+        "regular": title_font,
+        "light": title_font,
+    }
 
 
 def download_google_font(font_family: str, weights: list = None) -> Optional[dict]:
@@ -172,6 +199,13 @@ def load_fonts(font_family: Optional[str] = None) -> Optional[dict]:
     :return: Dict with 'bold', 'regular', 'light' keys mapping to font file paths,
              or None if all loading methods fail
     """
+    # If a built-in local preset is requested, use it directly.
+    if font_family:
+        local_bundle = _load_local_font_bundle(font_family)
+        if local_bundle:
+            print(f"✓ Local font preset '{font_family}' loaded successfully")
+            return local_bundle
+
     # If custom font family specified, try to download from Google Fonts
     if font_family and font_family.lower() != "roboto":
         print(f"Loading Google Font: {font_family}")
