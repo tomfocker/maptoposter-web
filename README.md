@@ -100,6 +100,18 @@ docker compose -f docker-compose.yml -f docker-compose.offline-cn.yml up -d
    python app/main.py
    ```
 
+### 常用画布比例补充
+
+当前 Web 面板除了默认的 `12x16`、`16x20`、`16x12`、`10x10`、`9x16` 之外，也补齐了原版项目文档里常用的几个尺寸预设：
+
+- `3.6 x 3.6`：Instagram Post
+- `3.6 x 6.4`：Mobile Wallpaper
+- `6.4 x 3.6`：HD Wallpaper
+- `12.8 x 7.2`：4K Wallpaper
+- `8.3 x 11.7`：A4 Print
+
+同时，PNG 导出现在会严格按照所选英寸和 DPI 输出，不再因为自动裁边而轻微偏离目标尺寸。
+
 ---
 
 ## 📐 高级设置指南

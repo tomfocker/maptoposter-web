@@ -213,3 +213,29 @@ def test_generate_poster_uses_chinese_font_preset_for_manual_chinese_override(ap
     assert task_kwargs["city"] == "上海"
     assert task_kwargs["country"] == "中国"
     assert task_kwargs["active_fonts"] == ["poster_zh_cn"]
+
+
+def test_generate_poster_passes_selected_canvas_size_and_dpi(app_main, monkeypatch):
+    class FakeGeolocator:
+        def geocode(self, query, **kwargs):
+            return FakeLocation(36.06, 120.37, {"city": "Qingdao", "country": "China"})
+
+    background_tasks = RecordingBackgroundTasks()
+
+    monkeypatch.setattr(app_main, "Nominatim", lambda *args, **kwargs: FakeGeolocator())
+
+    asyncio.run(
+        app_main.generate_poster(
+            request=object(),
+            background_tasks=background_tasks,
+            city="Qingdao",
+            country="China",
+            size="8.3x11.7",
+            dpi=150,
+        )
+    )
+
+    _, task_kwargs = background_tasks.calls[0]
+    assert task_kwargs["width"] == 8.3
+    assert task_kwargs["height"] == 11.7
+    assert task_kwargs["dpi"] == 150

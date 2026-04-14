@@ -9,6 +9,14 @@ def test_readme_mentions_slim_and_offline_enhanced_modes():
     assert "京華老宋体" in readme
 
 
+def test_readme_mentions_original_project_canvas_presets():
+    readme = Path("README.md").read_text(encoding="utf-8")
+    assert "Instagram Post" in readme
+    assert "Mobile Wallpaper" in readme
+    assert "HD Wallpaper" in readme
+    assert "A4 Print" in readme
+
+
 def test_offline_compose_documents_seeded_cache_behavior():
     compose = Path("docker-compose.offline-cn.yml").read_text(encoding="utf-8")
     assert "首次启动" in compose

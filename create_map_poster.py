@@ -34,6 +34,7 @@ from tqdm import tqdm
 from app.cache_index import CacheEntry, find_covering_entry, load_cache_index, save_cache_index
 from app.cache_runtime import load_pickle_from_path, register_layer_cache
 from app.cache_coverage import normalize_point
+from app.poster_export import build_save_kwargs
 from app.poster_layout import build_poster_typography
 from font_management import load_fonts
 
@@ -669,6 +670,7 @@ def create_poster(
     output_format,
     width=12,
     height=16,
+    dpi=300,
     country_label=None,
     name_label=None,
     display_city=None,
@@ -974,15 +976,7 @@ def create_poster(
     print(f"Saving to {output_file}...")
 
     fmt = output_format.lower()
-    save_kwargs = dict(
-        facecolor=THEME["bg"],
-        bbox_inches="tight",
-        pad_inches=0.05,
-    )
-
-    # DPI matters mainly for raster formats
-    if fmt == "png":
-        save_kwargs["dpi"] = 300
+    save_kwargs = build_save_kwargs(output_format=fmt, dpi=dpi, facecolor=THEME["bg"])
 
     plt.savefig(output_file, format=fmt, **save_kwargs)
 

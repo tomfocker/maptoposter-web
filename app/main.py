@@ -68,7 +68,7 @@ class ErrorCapture(io.StringIO):
 
 from contextlib import redirect_stdout, redirect_stderr
 
-def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale, original_city, original_country, width, height, output_format):
+def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale, original_city, original_country, width, height, dpi, output_format):
     try:
         f_out = LogCapture(task_id)
         f_err = ErrorCapture(task_id)
@@ -90,6 +90,7 @@ def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offs
                 output_format=output_format,
                 width=width,
                 height=height,
+                dpi=dpi,
                 map_x_offset=map_x_offset,
                 map_y_offset=map_y_offset,
                 fonts=active_fonts
@@ -284,6 +285,7 @@ async def generate_poster(
         original_country=en_country,
         width=width,
         height=height,
+        dpi=dpi,
         output_format=output_format
     )
 
