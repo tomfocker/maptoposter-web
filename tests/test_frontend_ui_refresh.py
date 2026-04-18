@@ -101,6 +101,14 @@ def test_theme_modal_hidden_state_has_explicit_css_rule():
     assert "display: none !important;" in stylesheet
 
 
+def test_loading_partial_preserves_spinner_between_status_polls():
+    template = Path("app/templates/partials/poster_stage_loading.html").read_text(encoding="utf-8")
+
+    assert 'hx-swap="outerHTML"' in template
+    assert 'hx-preserve="true"' in template
+    assert 'id="loading-spinner-{{ task_id }}"' in template
+
+
 def test_stylesheet_uses_cool_gallery_palette():
     stylesheet = Path("app/static/css/style.css").read_text(encoding="utf-8")
 
@@ -155,6 +163,7 @@ def test_history_route_keeps_supported_non_png_exports(app_main, monkeypatch):
     assert "output_format" in template
     assert "application/pdf" in template
     assert 'hx-delete="/history/{{ item.filename }}"' in template
+    assert "data-role=\"history-delete\"" in template
 
 
 def test_delete_history_route_removes_file_and_returns_updated_history(app_main, monkeypatch):
@@ -181,6 +190,13 @@ def test_delete_history_route_rejects_path_traversal(app_main, monkeypatch):
 
     assert removed == []
     _assert_partial_template_response(response, "partials/history_empty.html", items=[])
+
+
+def test_stylesheet_keeps_history_delete_button_absolutely_positioned():
+    stylesheet = Path("app/static/css/style.css").read_text(encoding="utf-8")
+
+    assert '#history-list > div > [data-role="history-delete"]' in stylesheet
+    assert "position: absolute !important;" in stylesheet
 
 
 def test_status_route_returns_success_partial_with_filename(app_main):

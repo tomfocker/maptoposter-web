@@ -2,6 +2,7 @@
 <div class="group relative bg-gray-50 border rounded-lg p-2 flex flex-col items-center">
     <button
         type="button"
+        data-role="history-delete"
         hx-delete="/history/{{ item.filename }}"
         hx-target="#history-list"
         hx-swap="innerHTML"

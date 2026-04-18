@@ -611,6 +611,13 @@ main {
     z-index: 1;
 }
 
+#history-list > div > [data-role="history-delete"] {
+    position: absolute !important;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 3;
+}
+
 #history-list .h-64 {
     height: clamp(15rem, 28vw, 19rem) !important;
     border: 1px solid rgba(56, 85, 124, 0.08);
