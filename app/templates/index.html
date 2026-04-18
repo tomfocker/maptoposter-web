@@ -35,7 +35,6 @@
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <h3 class="text-sm font-semibold text-slate-900">主题方案</h3>
-                        <p class="text-xs text-slate-500">首屏只保留当前主题预览，完整色板对照放到精修设置里。</p>
                     </div>
                 </div>
                 <label class="block text-sm font-medium text-slate-700">
@@ -52,7 +51,6 @@
                             <p class="text-sm font-semibold text-slate-800">当前主题色板</p>
                             <p id="current-theme-name" class="text-xs text-slate-500">{% if default_theme %}{{ default_theme.name }}{% else %}未加载主题{% endif %}</p>
                         </div>
-                        <p class="text-xs text-slate-500">全部主题仍然完整保留</p>
                     </div>
                     <div id="current-theme-strip" class="flex h-14 overflow-hidden rounded-xl border border-slate-100">
                         {% if default_theme %}
@@ -66,6 +64,41 @@
                             <span class="flex-1 bg-slate-400"></span>
                         {% endif %}
                     </div>
+                </div>
+            </section>
+
+            <section data-ui="output-settings" class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900">输出设置</h3>
+                </div>
+                <div class="grid gap-4 sm:grid-cols-3">
+                    <label class="block text-sm font-medium text-slate-700">
+                        画布尺寸
+                        <select name="size" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                            <option value="12x16">12x16 (标准竖版 3:4)</option>
+                            <option value="16x20">16x20 (大竖版 4:5)</option>
+                            <option value="16x12">16x12 (横版 4:3)</option>
+                            <option value="10x10">10x10 (正方形 1:1)</option>
+                            <option value="9x16">9x16 (手机壁纸竖版)</option>
+                            <option value="3.6x3.6">3.6x3.6 (Instagram Post 1:1)</option>
+                            <option value="3.6x6.4">3.6x6.4 (手机壁纸 9:16)</option>
+                            <option value="6.4x3.6">6.4x3.6 (高清横版 16:9)</option>
+                            <option value="12.8x7.2">12.8x7.2 (4K 横版 16:9)</option>
+                            <option value="8.3x11.7">8.3x11.7 (A4 Print)</option>
+                        </select>
+                    </label>
+                    <label class="block text-sm font-medium text-slate-700">
+                        图片质量 (DPI)
+                        <input type="number" name="dpi" value="300" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" title="推荐 300 适合印刷，72 适合快速预览">
+                    </label>
+                    <label class="block text-sm font-medium text-slate-700">
+                        导出格式
+                        <select name="output_format" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                            <option value="png">PNG</option>
+                            <option value="pdf">PDF</option>
+                            <option value="svg">SVG</option>
+                        </select>
+                    </label>
                 </div>
             </section>
 
@@ -130,35 +163,6 @@
                     <label class="block text-sm font-medium text-slate-700">
                         地图范围
                         <input type="number" name="dist" value="4000" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" title="数值越大，海报包含的城市范围越广">
-                        <span class="mt-1 block text-xs text-slate-500">4000-6000 适合紧凑中心区，8000 以上更适合完整城市视图。</span>
-                    </label>
-                    <label class="block text-sm font-medium text-slate-700">
-                        画布尺寸 (英寸)
-                        <select name="size" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
-                            <option value="12x16">12x16 (标准竖版 3:4)</option>
-                            <option value="16x20">16x20 (大竖版 4:5)</option>
-                            <option value="16x12">16x12 (横版 4:3)</option>
-                            <option value="10x10">10x10 (正方形 1:1)</option>
-                            <option value="9x16">9x16 (手机壁纸竖版)</option>
-                            <option value="3.6x3.6">3.6x3.6 (Instagram Post 1:1)</option>
-                            <option value="3.6x6.4">3.6x6.4 (手机壁纸 9:16)</option>
-                            <option value="6.4x3.6">6.4x3.6 (高清横版 16:9)</option>
-                            <option value="12.8x7.2">12.8x7.2 (4K 横版 16:9)</option>
-                            <option value="8.3x11.7">8.3x11.7 (A4 Print)</option>
-                        </select>
-                        <span class="mt-1 block text-xs text-slate-500">导出会严格按所选比例和 DPI 计算，不额外裁边。</span>
-                    </label>
-                    <label class="block text-sm font-medium text-slate-700">
-                        图片质量 (DPI)
-                        <input type="number" name="dpi" value="300" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" title="推荐 300 适合印刷，72 适合快速预览">
-                    </label>
-                    <label class="block text-sm font-medium text-slate-700">
-                        导出格式
-                        <select name="output_format" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
-                            <option value="png">PNG (推荐，适合分享)</option>
-                            <option value="pdf">PDF (矢量，适合印刷)</option>
-                            <option value="svg">SVG (纯矢量，可编辑)</option>
-                        </select>
                     </label>
                 </div>
 

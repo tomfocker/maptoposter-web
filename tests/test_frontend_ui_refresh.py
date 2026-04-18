@@ -46,6 +46,28 @@ def test_template_removes_nonessential_english_microcopy():
         assert snippet not in index_template
 
 
+def test_template_promotes_output_controls_above_refine_panel():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+    refine_panel_start = template.index('data-ui="refine-panel"')
+    pre_refine_panel = template[:refine_panel_start]
+    refine_panel = template[refine_panel_start:]
+
+    assert 'data-ui="output-settings"' in pre_refine_panel
+    assert 'name="size"' in pre_refine_panel
+    assert 'name="dpi"' in pre_refine_panel
+    assert 'name="output_format"' in pre_refine_panel
+    assert 'name="size"' not in refine_panel
+    assert 'name="dpi"' not in refine_panel
+    assert 'name="output_format"' not in refine_panel
+
+
+def test_template_removes_redundant_output_helper_copy():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+
+    assert "导出会严格按所选比例和 DPI 计算，不额外裁边。" not in template
+    assert "4000-6000 适合紧凑中心区，8000 以上更适合完整城市视图。" not in template
+
+
 def _assert_partial_template_response(response, template_name, **context):
     assert getattr(response, "template_name", None) == template_name
     response_context = getattr(response, "context", None)
