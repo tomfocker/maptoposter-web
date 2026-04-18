@@ -1,12 +1,20 @@
 {% for item in items %}
 <div class="group relative bg-gray-50 border rounded-lg p-2 flex flex-col items-center">
     <div class="w-full h-64 overflow-hidden rounded mb-2 bg-white flex items-center justify-center">
-        <img src="/posters/{{ item }}" class="max-h-full max-w-full object-contain shadow-sm group-hover:scale-105 transition duration-300">
+        {% if item.output_format == "pdf" %}
+        <object data="/posters/{{ item.filename }}" type="application/pdf" class="h-full w-full rounded bg-white">
+            <a href="/posters/{{ item.filename }}" target="_blank" rel="noopener noreferrer" class="text-sm text-blue-600 underline">
+                打开 PDF 预览
+            </a>
+        </object>
+        {% else %}
+        <img src="/posters/{{ item.filename }}" class="max-h-full max-w-full object-contain shadow-sm group-hover:scale-105 transition duration-300">
+        {% endif %}
     </div>
-    <p class="text-[10px] text-gray-500 truncate w-full text-center mb-2 px-2" title="{{ item }}">{{ item }}</p>
+    <p class="text-[10px] text-gray-500 truncate w-full text-center mb-2 px-2" title="{{ item.filename }}">{{ item.filename }}</p>
     <div class="w-full">
-        <a href="/posters/{{ item }}" download class="block w-full text-center bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-700 text-xs py-2 rounded transition">
-            下载高清原图
+        <a href="/posters/{{ item.filename }}" download class="block w-full text-center bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-700 text-xs py-2 rounded transition">
+            下载 {{ item.output_format|upper }}
         </a>
     </div>
 </div>

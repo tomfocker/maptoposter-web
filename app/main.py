@@ -41,6 +41,7 @@ logger = logging.getLogger(__name__)
 # --- 任务状态管理与日志拦截 ---
 TASKS_STATE = {}
 tasks_lock = Lock()
+SUPPORTED_POSTER_FORMATS = {"png", "pdf", "svg"}
 
 class LogCapture(io.StringIO):
     def __init__(self, task_id):
@@ -110,6 +111,7 @@ def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offs
         with tasks_lock:
             TASKS_STATE[task_id]["status"] = "done"
             TASKS_STATE[task_id]["filename"] = os.path.basename(output_path)
+            TASKS_STATE[task_id]["output_format"] = output_format
     except Exception as e:
         with tasks_lock:
             TASKS_STATE[task_id]["status"] = "error"
@@ -285,7 +287,12 @@ async def generate_poster(
     # 初始化任务状态
     task_id = str(uuid.uuid4())
     with tasks_lock:
-        TASKS_STATE[task_id] = {"status": "running", "log": "正在准备生成环境...", "filename": ""}
+        TASKS_STATE[task_id] = {
+            "status": "running",
+            "log": "正在准备生成环境...",
+            "filename": "",
+            "output_format": output_format,
+        }
 
     # 启动后台任务
     background_tasks.add_task(
@@ -322,7 +329,12 @@ async def get_status(task_id: str):
         state = TASKS_STATE.get(task_id, {"status": "error", "log": "任务未找到或已过期"})
     
     if state["status"] == "done":
-        return render_partial("partials/poster_stage_success.html", filename=state["filename"])
+        output_format = state.get("output_format") or Path(state["filename"]).suffix.lstrip(".") or "png"
+        return render_partial(
+            "partials/poster_stage_success.html",
+            filename=state["filename"],
+            output_format=output_format,
+        )
     elif state["status"] == "error":
         return render_partial("partials/poster_stage_error.html", log=state["log"])
     else:
@@ -330,17 +342,23 @@ async def get_status(task_id: str):
 
 @app.get("/history")
 async def get_history(request: Request):
-    # 临时实现：扫描目录获取最近的海报
-    files = sorted(
-        [f for f in os.listdir(POSTERS_DIR) if f.endswith(".png")],
-        key=lambda x: os.path.getmtime(os.path.join(POSTERS_DIR, x)),
+    items = sorted(
+        [
+            {
+                "filename": filename,
+                "output_format": Path(filename).suffix.lstrip(".").lower(),
+            }
+            for filename in os.listdir(POSTERS_DIR)
+            if Path(filename).suffix.lstrip(".").lower() in SUPPORTED_POSTER_FORMATS
+        ],
+        key=lambda x: os.path.getmtime(os.path.join(POSTERS_DIR, x["filename"])),
         reverse=True
     )[:12]
     
-    if not files:
+    if not items:
         return render_partial("partials/history_empty.html", request=request, items=[])
 
-    return render_partial("partials/history_grid.html", request=request, items=files)
+    return render_partial("partials/history_grid.html", request=request, items=items)
 
 if __name__ == "__main__":
     import uvicorn
