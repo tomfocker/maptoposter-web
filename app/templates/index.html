@@ -13,7 +13,6 @@
         >
             <div class="space-y-1">
                 <h2 class="text-2xl font-semibold text-slate-900">把城市变成一张可以马上预览的海报</h2>
-                <p class="text-sm text-slate-500">先输入地点与主题，右侧会即时承接生成进度和结果。</p>
             </div>
 
             <div class="rounded-2xl bg-sky-50 p-4">
@@ -51,6 +50,9 @@
                             <p class="text-sm font-semibold text-slate-800">当前主题色板</p>
                             <p id="current-theme-name" class="text-xs text-slate-500">{% if default_theme %}{{ default_theme.name }}{% else %}未加载主题{% endif %}</p>
                         </div>
+                        <button type="button" data-ui="theme-modal-open" class="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50">
+                            查看全部主题
+                        </button>
                     </div>
                     <div id="current-theme-strip" class="flex h-14 overflow-hidden rounded-xl border border-slate-100">
                         {% if default_theme %}
@@ -102,42 +104,10 @@
                 </div>
             </section>
 
-            <button
-                type="button"
-                data-ui="refine-toggle"
-                aria-expanded="false"
-                aria-controls="refine-panel"
-                class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:border-slate-300"
-            >
-                <span>展开精修面板</span>
-                <span class="text-xs tracking-[0.2em] text-slate-400">主题与高级设置</span>
-            </button>
-
-            <section id="refine-panel" data-ui="refine-panel" hidden class="space-y-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <div class="space-y-3 rounded-2xl bg-white p-4">
-                    <div class="space-y-1">
-                        <h3 class="text-sm font-semibold text-slate-900">主题色板总览</h3>
-                        <p class="text-xs text-slate-500">当前可选的 {{ theme_details|length }} 款主题都保留在这里，方便集中对照气质与配色。</p>
-                    </div>
-                    <div data-ui="theme-gallery" class="grid gap-3 sm:grid-cols-2">
-                        {% for t in theme_details %}
-                        <article class="rounded-2xl border border-slate-200 bg-white p-3">
-                            <div class="mb-3 flex h-12 overflow-hidden rounded-xl border border-slate-100">
-                                {% for color in t.colors %}
-                                <div class="flex-1" style="background-color: {{ color }};"></div>
-                                {% endfor %}
-                            </div>
-                            <p class="text-sm font-medium text-slate-700">{{ t.name }}</p>
-                        </article>
-                        {% endfor %}
-                    </div>
+            <section data-ui="copy-settings" class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900">文字覆盖</h3>
                 </div>
-
-                <div class="space-y-1">
-                    <h3 class="text-sm font-semibold text-slate-900">文字与导出</h3>
-                    <p class="text-xs text-slate-500">手动文案优先于自动生成名称，适合做中英切换或别称替换。</p>
-                </div>
-
                 <div class="grid gap-4 sm:grid-cols-2">
                     <label class="block text-sm font-medium text-slate-700">
                         海报大标题
@@ -148,7 +118,6 @@
                         <input type="text" name="display_country" placeholder="如: 中国" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                     </label>
                 </div>
-
                 <label class="block text-sm font-medium text-slate-700">
                     海报文案语言
                     <!-- template contract marker: <select name="copy_language"x -->
@@ -156,35 +125,29 @@
                         <option value="en" selected>英文（默认）</option>
                         <option value="zh">中文</option>
                     </select>
-                    <span class="mt-1 block text-xs text-slate-500">选中文时优先尝试中文地理名称；如果你手动输入标题，手动内容仍然优先。</span>
                 </label>
+            </section>
 
+            <section data-ui="composition-settings" class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-slate-900">构图微调</h3>
+                </div>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <label class="block text-sm font-medium text-slate-700">
                         地图范围
                         <input type="number" name="dist" value="4000" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm" title="数值越大，海报包含的城市范围越广">
                     </label>
-                </div>
-
-                <div class="space-y-3 rounded-2xl bg-white p-4">
-                    <div class="space-y-1">
-                        <h4 class="text-sm font-semibold text-slate-900">构图微调</h4>
-                        <p class="text-xs text-slate-500">在不改变地理搜索结果的前提下，微调地图落点与视觉力度。</p>
-                    </div>
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <label class="block text-sm font-medium text-slate-700">
-                            水平偏移 (X)
-                            <input type="number" name="map_x_offset" value="0.0" step="0.01" min="-0.5" max="0.5" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                        </label>
-                        <label class="block text-sm font-medium text-slate-700">
-                            垂直偏移 (Y)
-                            <input type="number" name="map_y_offset" value="0.0" step="0.01" min="-0.5" max="0.5" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                        </label>
-                    </div>
                     <label class="block text-sm font-medium text-slate-700">
                         道路粗细缩放
-                        <input type="number" name="road_width_scale" value="1.0" step="0.1" min="0.1" max="10.0" class="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
-                        <span class="mt-1 block text-xs text-slate-500">部分主题自带缩放倍率，此值会与主题倍率叠加。</span>
+                        <input type="number" name="road_width_scale" value="1.0" step="0.1" min="0.1" max="10.0" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                    </label>
+                    <label class="block text-sm font-medium text-slate-700">
+                        水平偏移 (X)
+                        <input type="number" name="map_x_offset" value="0.0" step="0.01" min="-0.5" max="0.5" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+                    </label>
+                    <label class="block text-sm font-medium text-slate-700">
+                        垂直偏移 (Y)
+                        <input type="number" name="map_y_offset" value="0.0" step="0.01" min="-0.5" max="0.5" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                     </label>
                 </div>
             </section>
@@ -204,7 +167,6 @@
                 <div>
                     <h2 class="text-xl font-semibold text-slate-900">海报预览</h2>
                 </div>
-                <p class="text-sm text-slate-500">支持 PNG、PDF 与 SVG 导出。</p>
             </div>
             <div id="preview-area" class="mt-6 min-h-[32rem] rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-4">
                 {% include "partials/poster_stage_empty.html" %}
@@ -217,29 +179,72 @@
             <div>
                 <h2 class="text-xl font-semibold text-slate-900">最近生成记录</h2>
             </div>
-            <p class="text-sm text-slate-500">历史结果会在加载后替换成网格视图。</p>
         </div>
         <div id="history-list" hx-get="/history" hx-trigger="load, posterGenerated from:body" class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {% include "partials/history_empty.html" %}
         </div>
     </section>
+
+    <div data-ui="theme-modal" hidden class="fixed inset-0 z-30 flex items-center justify-center px-4 py-8">
+        <button type="button" data-ui="theme-modal-close" class="absolute inset-0 bg-[rgba(35,31,26,0.42)] backdrop-blur-sm" aria-label="关闭主题色板弹窗"></button>
+        <section class="relative z-10 max-h-[min(42rem,calc(100vh-4rem))] w-full max-w-4xl overflow-hidden rounded-[1.75rem] border border-black/5 bg-white shadow-[0_28px_80px_-38px_rgba(35,31,26,0.5)]">
+            <div class="flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-5">
+                <div>
+                    <h2 class="text-xl font-semibold text-slate-900">全部主题色板</h2>
+                </div>
+                <button type="button" data-ui="theme-modal-close" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition hover:border-slate-300 hover:bg-slate-50" aria-label="关闭">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="max-h-[calc(100vh-12rem)] overflow-y-auto px-6 py-6">
+                <div data-ui="theme-gallery" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {% for t in theme_details %}
+                    <article class="rounded-2xl border border-slate-200 bg-white p-3">
+                        <div class="mb-3 flex h-12 overflow-hidden rounded-xl border border-slate-100">
+                            {% for color in t.colors %}
+                            <div class="flex-1" style="background-color: {{ color }};"></div>
+                            {% endfor %}
+                        </div>
+                        <p class="text-sm font-medium text-slate-700">{{ t.name }}</p>
+                    </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </section>
+    </div>
 </div>
 
 <script>
     (function () {
-        const refineToggle = document.querySelector('[data-ui="refine-toggle"]');
-        const refinePanel = document.querySelector('[data-ui="refine-panel"]');
         const form = document.getElementById('poster-form');
         const generateButton = document.getElementById('generate-btn');
         const themeSelect = document.getElementById('theme-select');
         const currentThemeName = document.getElementById('current-theme-name');
         const currentThemeStrip = document.getElementById('current-theme-strip');
+        const themeModal = document.querySelector('[data-ui="theme-modal"]');
+        const themeModalOpen = document.querySelector('[data-ui="theme-modal-open"]');
+        const themeModalClosers = document.querySelectorAll('[data-ui="theme-modal-close"]');
 
-        if (refineToggle && refinePanel) {
-            refineToggle.addEventListener('click', function () {
-                const isExpanded = refineToggle.getAttribute('aria-expanded') === 'true';
-                refinePanel.hidden = isExpanded;
-                refineToggle.setAttribute('aria-expanded', String(!isExpanded));
+        if (themeModal && themeModalOpen) {
+            const setThemeModalOpen = function (open) {
+                themeModal.hidden = !open;
+                document.body.classList.toggle('overflow-hidden', open);
+            };
+
+            themeModalOpen.addEventListener('click', function () {
+                setThemeModalOpen(true);
+            });
+
+            themeModalClosers.forEach(function (closer) {
+                closer.addEventListener('click', function () {
+                    setThemeModalOpen(false);
+                });
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape' && !themeModal.hidden) {
+                    setThemeModalOpen(false);
+                }
             });
         }
 

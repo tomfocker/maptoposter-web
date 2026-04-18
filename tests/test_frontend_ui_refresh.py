@@ -4,15 +4,19 @@ from pathlib import Path
 from tests._app_main_bootstrap import app_main
 
 
-def test_index_template_exposes_refine_panel_contract():
+def test_index_template_exposes_simplified_homepage_contract():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
     assert 'data-ui="studio-shell"' in template
     assert 'data-ui="quick-generate-panel"' in template
     assert 'data-ui="poster-stage"' in template
     assert 'data-ui="recent-works"' in template
     assert 'data-ui="theme-picker"' in template
-    assert 'data-ui="refine-toggle"' in template
-    assert 'data-ui="refine-panel"' in template
+    assert 'data-ui="output-settings"' in template
+    assert 'data-ui="copy-settings"' in template
+    assert 'data-ui="composition-settings"' in template
+    assert 'data-ui="theme-modal"' in template
+    assert 'data-ui="theme-modal-open"' in template
+    assert 'data-ui="theme-modal-close"' in template
     assert 'name="theme"' in template
     assert 'name="size"' in template
     assert 'name="copy_language"' in template
@@ -20,15 +24,15 @@ def test_index_template_exposes_refine_panel_contract():
     assert 'data-ui="theme-gallery"' in template
 
 
-def test_template_moves_theme_gallery_into_refine_panel():
+def test_template_moves_theme_gallery_into_modal_container():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
-    refine_panel_start = template.index('data-ui="refine-panel"')
-    pre_refine_panel = template[:refine_panel_start]
-    refine_panel = template[refine_panel_start:]
+    modal_start = template.index('data-ui="theme-modal"')
+    pre_modal = template[:modal_start]
+    modal = template[modal_start:]
 
-    assert "主题色板总览" not in pre_refine_panel
-    assert "主题色板总览" in refine_panel
-    assert 'data-ui="theme-current-preview"' in pre_refine_panel
+    assert 'data-ui="theme-gallery"' not in pre_modal
+    assert 'data-ui="theme-gallery"' in modal
+    assert "查看全部主题" in template
 
 
 def test_template_removes_nonessential_english_microcopy():
@@ -46,19 +50,31 @@ def test_template_removes_nonessential_english_microcopy():
         assert snippet not in index_template
 
 
-def test_template_promotes_output_controls_above_refine_panel():
-    template = Path("app/templates/index.html").read_text(encoding="utf-8")
-    refine_panel_start = template.index('data-ui="refine-panel"')
-    pre_refine_panel = template[:refine_panel_start]
-    refine_panel = template[refine_panel_start:]
+def test_template_keeps_only_minimal_top_level_microcopy():
+    base_template = Path("app/templates/base.html").read_text(encoding="utf-8")
+    index_template = Path("app/templates/index.html").read_text(encoding="utf-8")
 
-    assert 'data-ui="output-settings"' in pre_refine_panel
-    assert 'name="size"' in pre_refine_panel
-    assert 'name="dpi"' in pre_refine_panel
-    assert 'name="output_format"' in pre_refine_panel
-    assert 'name="size"' not in refine_panel
-    assert 'name="dpi"' not in refine_panel
-    assert 'name="output_format"' not in refine_panel
+    assert "地图海报工作室" in base_template
+    assert "输入地点，快速生成一张可下载的城市海报" in base_template
+    assert "首屏只保留最常用操作，完整主题和精修设置都收进下方折叠区。" not in base_template
+    assert "先输入地点与主题，右侧会即时承接生成进度和结果。" not in index_template
+    assert "支持 PNG、PDF 与 SVG 导出。" not in index_template
+
+
+def test_template_replaces_refine_panel_with_always_visible_sections():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+    assert 'data-ui="refine-toggle"' not in template
+    assert 'data-ui="refine-panel"' not in template
+    assert 'data-ui="copy-settings"' in template
+    assert 'data-ui="composition-settings"' in template
+
+
+def test_template_includes_theme_modal_interaction_hooks():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+    assert "themeModalOpen" in template
+    assert "themeModalClosers" in template
+    assert "Escape" in template
+    assert "overflow-hidden" in template
 
 
 def test_template_removes_redundant_output_helper_copy():

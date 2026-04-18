@@ -23,10 +23,10 @@ class FakeLocation:
 
 def test_index_template_exposes_copy_language_selector():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
-    assert 'data-ui="refine-panel"' in template
-    refine_panel_start = template.index('data-ui="refine-panel"')
-    refine_panel = template[refine_panel_start:]
-    assert re.search(r'<select\b[^>]*name="copy_language"\b', refine_panel)
+    assert 'data-ui="copy-settings"' in template
+    copy_settings_start = template.index('data-ui="copy-settings"')
+    copy_settings = template[copy_settings_start:]
+    assert re.search(r'<select\b[^>]*name="copy_language"\b', copy_settings)
     assert re.search(r'<option\b[^>]*value="en"', template)
     assert re.search(r'<option\b[^>]*value="zh"', template)
 
