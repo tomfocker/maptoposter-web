@@ -363,6 +363,10 @@ main {
     background: rgba(35, 31, 26, 0.14);
 }
 
+[data-ui="theme-modal"][hidden] {
+    display: none !important;
+}
+
 [data-ui="theme-modal"] > section {
     background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 244, 236, 0.98)) !important;

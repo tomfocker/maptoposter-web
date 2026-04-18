@@ -77,6 +77,12 @@ def test_template_includes_theme_modal_interaction_hooks():
     assert "overflow-hidden" in template
 
 
+def test_theme_modal_hidden_state_has_explicit_css_rule():
+    stylesheet = Path("app/static/css/style.css").read_text(encoding="utf-8")
+    assert '[data-ui="theme-modal"][hidden]' in stylesheet
+    assert "display: none !important;" in stylesheet
+
+
 def test_template_removes_redundant_output_helper_copy():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
 
