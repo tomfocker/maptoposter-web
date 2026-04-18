@@ -1,0 +1,38 @@
+import asyncio
+from pathlib import Path
+
+from tests._app_main_bootstrap import app_main
+
+
+def test_index_template_exposes_refine_panel_contract():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+    assert 'data-ui="studio-shell"' in template
+    assert 'data-ui="quick-generate-panel"' in template
+    assert 'data-ui="poster-stage"' in template
+    assert 'data-ui="recent-works"' in template
+    assert 'data-ui="theme-picker"' in template
+    assert 'data-ui="refine-toggle"' in template
+    assert 'data-ui="refine-panel"' in template
+    assert 'name="theme"' in template
+    assert 'name="size"' in template
+    assert 'name="copy_language"' in template
+
+
+def _assert_partial_template_response(response, template_name, **context):
+    assert getattr(response, "template_name", None) == template_name
+    response_context = getattr(response, "context", None)
+    assert isinstance(response_context, dict)
+    for key, value in context.items():
+        assert response_context[key] == value
+
+
+def test_history_route_returns_empty_history_partial(app_main, monkeypatch):
+    monkeypatch.setattr(app_main.os, "listdir", lambda *_: [])
+    response = asyncio.run(app_main.get_history(request=object()))
+    _assert_partial_template_response(response, "partials/history_empty.html", items=[])
+
+
+def test_status_route_returns_success_partial_with_filename(app_main):
+    app_main.TASKS_STATE["task-123"] = {"status": "done", "filename": "poster.png", "log": ""}
+    response = asyncio.run(app_main.get_status("task-123"))
+    _assert_partial_template_response(response, "partials/poster_stage_success.html", filename="poster.png")
