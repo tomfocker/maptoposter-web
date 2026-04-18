@@ -69,6 +69,17 @@ def test_template_replaces_refine_panel_with_always_visible_sections():
     assert 'data-ui="composition-settings"' in template
 
 
+def test_template_places_recent_works_inside_results_column():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+    assert 'data-ui="results-column"' in template
+
+    results_column_start = template.index('data-ui="results-column"')
+    results_column = template[results_column_start:]
+
+    assert 'data-ui="poster-stage"' in results_column
+    assert 'data-ui="recent-works"' in results_column
+
+
 def test_template_includes_theme_modal_interaction_hooks():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
     assert "themeModalOpen" in template
@@ -83,11 +94,27 @@ def test_theme_modal_hidden_state_has_explicit_css_rule():
     assert "display: none !important;" in stylesheet
 
 
+def test_stylesheet_uses_cool_gallery_palette():
+    stylesheet = Path("app/static/css/style.css").read_text(encoding="utf-8")
+
+    assert "--studio-bg: #eef3f8;" in stylesheet
+    assert "--studio-accent: #2e5b88;" in stylesheet
+    assert "--studio-highlight: #dbe7f4;" in stylesheet
+    assert "#b26d3b" not in stylesheet
+
+
 def test_template_removes_redundant_output_helper_copy():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
 
     assert "导出会严格按所选比例和 DPI 计算，不额外裁边。" not in template
     assert "4000-6000 适合紧凑中心区，8000 以上更适合完整城市视图。" not in template
+
+
+def test_template_removes_redundant_hero_and_cache_copy():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+
+    assert "把城市变成一张可以马上预览的海报" not in template
+    assert "智能缓存机制" not in template
 
 
 def _assert_partial_template_response(response, template_name, **context):
@@ -124,8 +151,14 @@ def test_history_route_keeps_supported_non_png_exports(app_main, monkeypatch):
 
 def test_status_route_returns_success_partial_with_filename(app_main):
     app_main.TASKS_STATE["task-123"] = {"status": "done", "filename": "poster.png", "log": ""}
-    response = asyncio.run(app_main.get_status("task-123"))
-    _assert_partial_template_response(response, "partials/poster_stage_success.html", filename="poster.png")
+    request = object()
+    response = asyncio.run(app_main.get_status(request, "task-123"))
+    _assert_partial_template_response(
+        response,
+        "partials/poster_stage_success.html",
+        request=request,
+        filename="poster.png",
+    )
 
 
 def test_status_route_exposes_output_format_for_success_partial(app_main):
@@ -136,10 +169,12 @@ def test_status_route_exposes_output_format_for_success_partial(app_main):
         "log": "",
     }
 
-    response = asyncio.run(app_main.get_status("task-456"))
+    request = object()
+    response = asyncio.run(app_main.get_status(request, "task-456"))
     _assert_partial_template_response(
         response,
         "partials/poster_stage_success.html",
+        request=request,
         filename="poster.pdf",
         output_format="pdf",
     )
@@ -147,3 +182,26 @@ def test_status_route_exposes_output_format_for_success_partial(app_main):
     template = Path("app/templates/partials/poster_stage_success.html").read_text(encoding="utf-8")
     assert "output_format" in template
     assert "application/pdf" in template
+
+
+def test_status_route_passes_request_for_loading_and_error_partials(app_main):
+    request = object()
+    app_main.TASKS_STATE["task-loading"] = {"status": "running", "filename": "", "log": "正在准备生成环境..."}
+    app_main.TASKS_STATE["task-error"] = {"status": "error", "filename": "", "log": "出错了"}
+
+    loading_response = asyncio.run(app_main.get_status(request, "task-loading"))
+    error_response = asyncio.run(app_main.get_status(request, "task-error"))
+
+    _assert_partial_template_response(
+        loading_response,
+        "partials/poster_stage_loading.html",
+        request=request,
+        task_id="task-loading",
+        log="正在准备生成环境...",
+    )
+    _assert_partial_template_response(
+        error_response,
+        "partials/poster_stage_error.html",
+        request=request,
+        log="出错了",
+    )

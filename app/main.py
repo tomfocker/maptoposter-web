@@ -324,7 +324,7 @@ async def generate_poster(
     )
 
 @app.get("/status/{task_id}")
-async def get_status(task_id: str):
+async def get_status(request: Request, task_id: str):
     with tasks_lock:
         state = TASKS_STATE.get(task_id, {"status": "error", "log": "任务未找到或已过期"})
     
@@ -332,13 +332,19 @@ async def get_status(task_id: str):
         output_format = state.get("output_format") or Path(state["filename"]).suffix.lstrip(".") or "png"
         return render_partial(
             "partials/poster_stage_success.html",
+            request=request,
             filename=state["filename"],
             output_format=output_format,
         )
     elif state["status"] == "error":
-        return render_partial("partials/poster_stage_error.html", log=state["log"])
+        return render_partial("partials/poster_stage_error.html", request=request, log=state["log"])
     else:
-        return render_partial("partials/poster_stage_loading.html", task_id=task_id, log=state["log"])
+        return render_partial(
+            "partials/poster_stage_loading.html",
+            request=request,
+            task_id=task_id,
+            log=state["log"],
+        )
 
 @app.get("/history")
 async def get_history(request: Request):
