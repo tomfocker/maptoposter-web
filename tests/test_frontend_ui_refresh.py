@@ -16,6 +16,34 @@ def test_index_template_exposes_refine_panel_contract():
     assert 'name="theme"' in template
     assert 'name="size"' in template
     assert 'name="copy_language"' in template
+    assert 'data-ui="theme-current-preview"' in template
+    assert 'data-ui="theme-gallery"' in template
+
+
+def test_template_moves_theme_gallery_into_refine_panel():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+    refine_panel_start = template.index('data-ui="refine-panel"')
+    pre_refine_panel = template[:refine_panel_start]
+    refine_panel = template[refine_panel_start:]
+
+    assert "主题色板总览" not in pre_refine_panel
+    assert "主题色板总览" in refine_panel
+    assert 'data-ui="theme-current-preview"' in pre_refine_panel
+
+
+def test_template_removes_nonessential_english_microcopy():
+    base_template = Path("app/templates/base.html").read_text(encoding="utf-8")
+    index_template = Path("app/templates/index.html").read_text(encoding="utf-8")
+
+    for snippet in (
+        "MapToPoster Studio",
+        "Preview-first poster workflow",
+        "Search, tune, and export from one workspace.",
+    ):
+        assert snippet not in base_template
+
+    for snippet in ("Quick Generate", "Poster Stage", "Recent Works", "Advanced"):
+        assert snippet not in index_template
 
 
 def _assert_partial_template_response(response, template_name, **context):

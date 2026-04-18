@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% set default_theme = theme_details[0] if theme_details else None %}
 <div data-ui="studio-shell" class="space-y-6">
     <section class="grid gap-6 xl:grid-cols-[minmax(20rem,26rem)_minmax(0,1fr)]">
         <form
@@ -11,7 +12,6 @@
             class="space-y-5 rounded-[1.75rem] border border-black/5 bg-white p-6 shadow-sm"
         >
             <div class="space-y-1">
-                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Quick Generate</p>
                 <h2 class="text-2xl font-semibold text-slate-900">把城市变成一张可以马上预览的海报</h2>
                 <p class="text-sm text-slate-500">先输入地点与主题，右侧会即时承接生成进度和结果。</p>
             </div>
@@ -35,29 +35,37 @@
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <h3 class="text-sm font-semibold text-slate-900">主题方案</h3>
-                        <p class="text-xs text-slate-500">保留现有主题列表，先选气质再进入精修。</p>
+                        <p class="text-xs text-slate-500">首屏只保留当前主题预览，完整色板对照放到精修设置里。</p>
                     </div>
                 </div>
                 <label class="block text-sm font-medium text-slate-700">
                     主题选择
                     <select name="theme" id="theme-select" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                         {% for t in theme_details %}
-                        <option value="{{ t.id }}">{{ t.name }}</option>
+                        <option value="{{ t.id }}" data-theme-name="{{ t.name }}" data-colors="{{ t.colors | join(',') }}">{{ t.name }}</option>
                         {% endfor %}
                     </select>
                 </label>
-                <div class="grid gap-3 sm:grid-cols-2">
-                    {% for t in theme_details %}
-                    <article class="rounded-2xl border border-slate-200 bg-white p-3">
-                        <div class="mb-3 flex h-12 overflow-hidden rounded-xl border border-slate-100">
-                            {% for color in t.colors %}
-                            <div class="flex-1" style="background-color: {{ color }};"></div>
-                            {% endfor %}
+                <div data-ui="theme-current-preview" class="space-y-3 rounded-2xl bg-white p-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-800">当前主题色板</p>
+                            <p id="current-theme-name" class="text-xs text-slate-500">{% if default_theme %}{{ default_theme.name }}{% else %}未加载主题{% endif %}</p>
                         </div>
-                        <p class="text-sm font-medium text-slate-700">{{ t.name }}</p>
-                        <p class="text-xs text-slate-400">{{ t.id }}</p>
-                    </article>
-                    {% endfor %}
+                        <p class="text-xs text-slate-500">全部主题仍然完整保留</p>
+                    </div>
+                    <div id="current-theme-strip" class="flex h-14 overflow-hidden rounded-xl border border-slate-100">
+                        {% if default_theme %}
+                            {% for color in default_theme.colors %}
+                            <span class="flex-1" style="background-color: {{ color }};"></span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="flex-1 bg-slate-100"></span>
+                            <span class="flex-1 bg-slate-200"></span>
+                            <span class="flex-1 bg-slate-300"></span>
+                            <span class="flex-1 bg-slate-400"></span>
+                        {% endif %}
+                    </div>
                 </div>
             </section>
 
@@ -69,10 +77,29 @@
                 class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left text-sm font-medium text-slate-700 transition hover:border-slate-300"
             >
                 <span>展开精修面板</span>
-                <span class="text-xs uppercase tracking-[0.2em] text-slate-400">Advanced</span>
+                <span class="text-xs tracking-[0.2em] text-slate-400">主题与高级设置</span>
             </button>
 
             <section id="refine-panel" data-ui="refine-panel" hidden class="space-y-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <div class="space-y-3 rounded-2xl bg-white p-4">
+                    <div class="space-y-1">
+                        <h3 class="text-sm font-semibold text-slate-900">主题色板总览</h3>
+                        <p class="text-xs text-slate-500">当前可选的 {{ theme_details|length }} 款主题都保留在这里，方便集中对照气质与配色。</p>
+                    </div>
+                    <div data-ui="theme-gallery" class="grid gap-3 sm:grid-cols-2">
+                        {% for t in theme_details %}
+                        <article class="rounded-2xl border border-slate-200 bg-white p-3">
+                            <div class="mb-3 flex h-12 overflow-hidden rounded-xl border border-slate-100">
+                                {% for color in t.colors %}
+                                <div class="flex-1" style="background-color: {{ color }};"></div>
+                                {% endfor %}
+                            </div>
+                            <p class="text-sm font-medium text-slate-700">{{ t.name }}</p>
+                        </article>
+                        {% endfor %}
+                    </div>
+                </div>
+
                 <div class="space-y-1">
                     <h3 class="text-sm font-semibold text-slate-900">文字与导出</h3>
                     <p class="text-xs text-slate-500">手动文案优先于自动生成名称，适合做中英切换或别称替换。</p>
@@ -171,10 +198,9 @@
         <section data-ui="poster-stage" class="rounded-[1.75rem] border border-black/5 bg-white p-6 shadow-sm">
             <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
                 <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Poster Stage</p>
                     <h2 class="text-xl font-semibold text-slate-900">海报预览</h2>
                 </div>
-                <p class="text-sm text-slate-500">支持 PNG、PDF 与 SVG 导出流程。</p>
+                <p class="text-sm text-slate-500">支持 PNG、PDF 与 SVG 导出。</p>
             </div>
             <div id="preview-area" class="mt-6 min-h-[32rem] rounded-[1.5rem] border border-dashed border-slate-200 bg-slate-50 p-4">
                 {% include "partials/poster_stage_empty.html" %}
@@ -185,7 +211,6 @@
     <section data-ui="recent-works" class="rounded-[1.75rem] border border-black/5 bg-white p-6 shadow-sm">
         <div class="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-                <p class="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Recent Works</p>
                 <h2 class="text-xl font-semibold text-slate-900">最近生成记录</h2>
             </div>
             <p class="text-sm text-slate-500">历史结果会在加载后替换成网格视图。</p>
@@ -202,6 +227,9 @@
         const refinePanel = document.querySelector('[data-ui="refine-panel"]');
         const form = document.getElementById('poster-form');
         const generateButton = document.getElementById('generate-btn');
+        const themeSelect = document.getElementById('theme-select');
+        const currentThemeName = document.getElementById('current-theme-name');
+        const currentThemeStrip = document.getElementById('current-theme-strip');
 
         if (refineToggle && refinePanel) {
             refineToggle.addEventListener('click', function () {
@@ -209,6 +237,25 @@
                 refinePanel.hidden = isExpanded;
                 refineToggle.setAttribute('aria-expanded', String(!isExpanded));
             });
+        }
+
+        if (themeSelect && currentThemeName && currentThemeStrip) {
+            const applyThemePreview = function () {
+                const selectedOption = themeSelect.options[themeSelect.selectedIndex];
+                const colors = (selectedOption.dataset.colors || "").split(",").filter(Boolean);
+                currentThemeName.textContent = selectedOption.dataset.themeName || selectedOption.textContent;
+                currentThemeStrip.innerHTML = "";
+
+                colors.forEach(function (color) {
+                    const swatch = document.createElement("span");
+                    swatch.className = "flex-1";
+                    swatch.style.backgroundColor = color;
+                    currentThemeStrip.appendChild(swatch);
+                });
+            };
+
+            applyThemePreview();
+            themeSelect.addEventListener("change", applyThemePreview);
         }
 
         if (form && generateButton) {
