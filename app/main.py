@@ -366,6 +366,19 @@ async def get_history(request: Request):
 
     return render_partial("partials/history_grid.html", request=request, items=items)
 
+
+@app.delete("/history/{filename}")
+async def delete_history_item(request: Request, filename: str):
+    safe_name = Path(filename).name
+    output_format = Path(safe_name).suffix.lstrip(".").lower()
+
+    if safe_name == filename and output_format in SUPPORTED_POSTER_FORMATS:
+        file_path = os.path.join(POSTERS_DIR, safe_name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+    return await get_history(request)
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

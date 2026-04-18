@@ -80,6 +80,13 @@ def test_template_places_recent_works_inside_results_column():
     assert 'data-ui="recent-works"' in results_column
 
 
+def test_template_adds_scroll_body_for_recent_works():
+    template = Path("app/templates/index.html").read_text(encoding="utf-8")
+
+    assert 'data-ui="recent-works-body"' in template
+    assert "ResizeObserver" in template
+
+
 def test_template_includes_theme_modal_interaction_hooks():
     template = Path("app/templates/index.html").read_text(encoding="utf-8")
     assert "themeModalOpen" in template
@@ -147,6 +154,33 @@ def test_history_route_keeps_supported_non_png_exports(app_main, monkeypatch):
     template = Path("app/templates/partials/history_grid.html").read_text(encoding="utf-8")
     assert "output_format" in template
     assert "application/pdf" in template
+    assert 'hx-delete="/history/{{ item.filename }}"' in template
+
+
+def test_delete_history_route_removes_file_and_returns_updated_history(app_main, monkeypatch):
+    removed = []
+
+    monkeypatch.setattr(app_main.os.path, "exists", lambda path: path.endswith("poster.png"))
+    monkeypatch.setattr(app_main.os, "remove", lambda path: removed.append(path))
+    monkeypatch.setattr(app_main.os, "listdir", lambda *_: [])
+
+    response = asyncio.run(app_main.delete_history_item(object(), "poster.png"))
+
+    assert removed == ["posters/poster.png"]
+    _assert_partial_template_response(response, "partials/history_empty.html", items=[])
+
+
+def test_delete_history_route_rejects_path_traversal(app_main, monkeypatch):
+    removed = []
+
+    monkeypatch.setattr(app_main.os.path, "exists", lambda *_: True)
+    monkeypatch.setattr(app_main.os, "remove", lambda path: removed.append(path))
+    monkeypatch.setattr(app_main.os, "listdir", lambda *_: [])
+
+    response = asyncio.run(app_main.delete_history_item(object(), "../poster.png"))
+
+    assert removed == []
+    _assert_partial_template_response(response, "partials/history_empty.html", items=[])
 
 
 def test_status_route_returns_success_partial_with_filename(app_main):

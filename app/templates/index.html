@@ -171,8 +171,10 @@
                         <h2 class="text-xl font-semibold text-slate-900">最近生成记录</h2>
                     </div>
                 </div>
-                <div id="history-list" hx-get="/history" hx-trigger="load, posterGenerated from:body" class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 2xl:grid-cols-3">
-                    {% include "partials/history_empty.html" %}
+                <div data-ui="recent-works-body" class="mt-6">
+                    <div id="history-list" hx-get="/history" hx-trigger="load, posterGenerated from:body" class="grid grid-cols-1 gap-6 sm:grid-cols-2 2xl:grid-cols-3">
+                        {% include "partials/history_empty.html" %}
+                    </div>
                 </div>
             </section>
         </div>
@@ -214,9 +216,29 @@
         const themeSelect = document.getElementById('theme-select');
         const currentThemeName = document.getElementById('current-theme-name');
         const currentThemeStrip = document.getElementById('current-theme-strip');
+        const resultsColumn = document.querySelector('[data-ui="results-column"]');
         const themeModal = document.querySelector('[data-ui="theme-modal"]');
         const themeModalOpen = document.querySelector('[data-ui="theme-modal-open"]');
         const themeModalClosers = document.querySelectorAll('[data-ui="theme-modal-close"]');
+
+        if (form && resultsColumn) {
+            const syncResultsColumnHeight = function () {
+                if (window.innerWidth < 1280) {
+                    resultsColumn.style.height = "";
+                    return;
+                }
+
+                resultsColumn.style.height = form.offsetHeight + "px";
+            };
+
+            syncResultsColumnHeight();
+            window.addEventListener("resize", syncResultsColumnHeight);
+
+            if ("ResizeObserver" in window) {
+                const resizeObserver = new ResizeObserver(syncResultsColumnHeight);
+                resizeObserver.observe(form);
+            }
+        }
 
         if (themeModal && themeModalOpen) {
             const setThemeModalOpen = function (open) {

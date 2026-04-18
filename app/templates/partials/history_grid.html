@@ -1,5 +1,16 @@
 {% for item in items %}
 <div class="group relative bg-gray-50 border rounded-lg p-2 flex flex-col items-center">
+    <button
+        type="button"
+        hx-delete="/history/{{ item.filename }}"
+        hx-target="#history-list"
+        hx-swap="innerHTML"
+        hx-confirm="确定删除这条生成记录吗？"
+        class="absolute right-3 top-3 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-sm text-slate-500 shadow-sm backdrop-blur transition hover:border-red-200 hover:bg-red-50 hover:text-red-500"
+        aria-label="删除 {{ item.filename }}"
+    >
+        ×
+    </button>
     <div class="w-full h-64 overflow-hidden rounded mb-2 bg-white flex items-center justify-center">
         {% if item.output_format == "pdf" %}
         <object data="/posters/{{ item.filename }}" type="application/pdf" class="h-full w-full rounded bg-white">

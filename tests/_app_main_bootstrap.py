@@ -34,6 +34,9 @@ def app_main(monkeypatch):
         def post(self, *args, **kwargs):
             return lambda func: func
 
+        def delete(self, *args, **kwargs):
+            return lambda func: func
+
     class _Jinja2Templates:
         def __init__(self, *args, **kwargs):
             pass

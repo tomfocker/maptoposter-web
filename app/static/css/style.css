@@ -156,6 +156,13 @@ main {
     align-items: start;
 }
 
+[data-ui="results-column"] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 1.5rem;
+    min-height: 0;
+}
+
 [data-ui="quick-generate-panel"],
 [data-ui="poster-stage"],
 [data-ui="recent-works"] {
@@ -188,6 +195,12 @@ main {
 
 [data-ui="quick-generate-panel"] {
     gap: 1.15rem;
+}
+
+[data-ui="recent-works"] {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
 }
 
 [data-ui="quick-generate-panel"] > .space-y-1 h2 {
@@ -555,7 +568,16 @@ main {
 }
 
 #history-list {
+    max-height: 100%;
+    overflow-y: auto;
+    padding-right: 0.35rem;
     align-items: stretch;
+    align-content: start;
+}
+
+[data-ui="recent-works-body"] {
+    min-height: 0;
+    flex: 1;
 }
 
 #history-list > div {
@@ -631,6 +653,21 @@ main {
         linear-gradient(180deg, rgba(251, 253, 255, 0.98), rgba(234, 242, 250, 0.98)) !important;
 }
 
+#history-list::-webkit-scrollbar {
+    width: 0.7rem;
+}
+
+#history-list::-webkit-scrollbar-track {
+    background: rgba(224, 233, 243, 0.75);
+    border-radius: 999px;
+}
+
+#history-list::-webkit-scrollbar-thumb {
+    background: rgba(108, 136, 170, 0.7);
+    border: 2px solid rgba(224, 233, 243, 0.85);
+    border-radius: 999px;
+}
+
 #history-list > p {
     grid-column: 1 / -1;
     border: 1px dashed rgba(56, 85, 124, 0.16);
@@ -659,12 +696,21 @@ main {
         position: static;
     }
 
+    [data-ui="results-column"] {
+        height: auto !important;
+        grid-template-rows: auto;
+    }
+
     [data-ui="studio-shell"] > section:first-child {
         grid-template-columns: minmax(0, 1fr) !important;
     }
 
     [data-ui="poster-stage"] {
         order: -1;
+    }
+
+    [data-ui="recent-works-body"] {
+        flex: none;
     }
 
     #preview-area > * {
@@ -684,6 +730,12 @@ main {
     [data-ui="theme-gallery"],
     #history-list {
         grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    #history-list {
+        max-height: none;
+        overflow: visible;
+        padding-right: 0;
     }
 
     #preview-area {
