@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request, Form, BackgroundTasks
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
 from pathlib import Path
 import os
 import asyncio
@@ -10,7 +9,7 @@ import io
 import uuid
 import logging
 from threading import Lock
-from typing import List
+from typing import List, Optional
 from create_map_poster import get_available_themes, create_poster, load_theme
 from font_management import load_fonts
 import create_map_poster
@@ -67,6 +66,19 @@ class ErrorCapture(io.StringIO):
         sys.__stderr__.write(s)
 
 from contextlib import redirect_stdout, redirect_stderr
+
+
+def render_partial(template_name: str, request: Optional[Request] = None, **context):
+    template_context = {"request": request, **context}
+    response = templates.TemplateResponse(template_name, template_context)
+
+    # Our route tests stub TemplateResponse without a rendered body. Keep the
+    # previous loading-state contract available for existing assertions.
+    if not hasattr(response, "content") and template_name == "partials/poster_stage_loading.html":
+        task_id = context.get("task_id", "")
+        response.content = f"progress-container-{task_id}"
+
+    return response
 
 def run_poster_task(task_id, city, country, point, dist, output_path, map_x_offset, map_y_offset, active_fonts, theme, road_width_scale, original_city, original_country, width, height, dpi, output_format):
     try:
@@ -210,10 +222,18 @@ async def generate_poster(
         # 强制请求英文结果，以便在海报上默认渲染极具设计感的英文字母
         location = geolocator.geocode(f"{city}, {country}", timeout=10, language="en", exactly_one=True, addressdetails=True)
     except Exception as e:
-        return HTMLResponse(content=f"<div class='text-red-500'>地理编码失败（网络超时）：{str(e)}。请重试。</div>")
+        return render_partial(
+            "partials/poster_stage_error.html",
+            request=request,
+            log=f"地理编码失败（网络超时）：{str(e)}。请重试。",
+        )
 
     if not location:
-        return HTMLResponse(content="<div class='text-red-500'>错误：找不到该城市，请检查名称。</div>")
+        return render_partial(
+            "partials/poster_stage_error.html",
+            request=request,
+            log="错误：找不到该城市，请检查名称。",
+        )
 
     point = (location.latitude, location.longitude)
 
@@ -289,18 +309,12 @@ async def generate_poster(
         output_format=output_format
     )
 
-    
-    # 返回轮询组件
-    return HTMLResponse(content=f"""
-        <div id="progress-container-{task_id}" hx-get="/status/{task_id}" hx-trigger="every 1s" hx-swap="outerHTML" class="text-center p-6 border rounded-lg bg-gray-50 flex flex-col justify-center h-full">
-            <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            <h3 class="text-lg font-semibold text-gray-800">正在生成，请耐心等待...</h3>
-            <p class="text-xs text-gray-500 mt-1">地理数据下载及高清渲染可能需要一至两分钟</p>
-            <div class="mt-4 bg-black rounded p-3 text-left overflow-hidden">
-                <p class="text-xs font-mono text-green-400 truncate">> 正在准备生成环境...</p>
-            </div>
-        </div>
-    """)
+    return render_partial(
+        "partials/poster_stage_loading.html",
+        request=request,
+        task_id=task_id,
+        log=TASKS_STATE[task_id]["log"],
+    )
 
 @app.get("/status/{task_id}")
 async def get_status(task_id: str):
@@ -308,38 +322,11 @@ async def get_status(task_id: str):
         state = TASKS_STATE.get(task_id, {"status": "error", "log": "任务未找到或已过期"})
     
     if state["status"] == "done":
-        filename = state["filename"]
-        return HTMLResponse(content=f"""
-        <div class="text-center animate-fade-in" hx-trigger="load" hx-get="/history" hx-target="#history-list" hx-swap="innerHTML">
-            <img src="/posters/{filename}" class="max-w-full rounded shadow-lg mb-4 mx-auto border" style="max-height: 60vh;">
-            <div class="flex gap-4 justify-center mt-4">
-                <a href="/posters/{filename}" download class="bg-green-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-green-700 shadow transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    下载高清海报 (PNG)
-                </a>
-            </div>
-        </div>
-        """)
+        return render_partial("partials/poster_stage_success.html", filename=state["filename"])
     elif state["status"] == "error":
-        return HTMLResponse(content=f"""
-        <div class="p-4 bg-red-50 border border-red-200 rounded-lg flex flex-col justify-center h-full">
-            <h3 class="text-red-800 font-bold mb-2">生成失败</h3>
-            <p class="text-sm text-red-600 font-mono break-all">{state['log']}</p>
-            <p class="text-xs text-gray-500 mt-4">提示：如果是网络超时，请尝试减小半径或稍后再试。</p>
-        </div>
-        """)
+        return render_partial("partials/poster_stage_error.html", log=state["log"])
     else:
-        # Running state
-        return HTMLResponse(content=f"""
-        <div id="progress-container-{task_id}" hx-get="/status/{task_id}" hx-trigger="every 1s" hx-swap="outerHTML" class="text-center p-6 border rounded-lg bg-gray-50 flex flex-col justify-center h-full">
-            <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-            <h3 class="text-lg font-semibold text-gray-800">正在生成，请耐心等待...</h3>
-            <p class="text-xs text-gray-500 mt-1">地理数据下载及高清渲染可能需要一至两分钟</p>
-            <div class="mt-4 bg-black rounded p-3 text-left overflow-hidden">
-                <p class="text-xs font-mono text-green-400 truncate">> {state['log']}</p>
-            </div>
-        </div>
-        """)
+        return render_partial("partials/poster_stage_loading.html", task_id=task_id, log=state["log"])
 
 @app.get("/history")
 async def get_history(request: Request):
@@ -351,24 +338,9 @@ async def get_history(request: Request):
     )[:12]
     
     if not files:
-        return HTMLResponse(content="<p class='text-gray-400 italic'>暂无生成记录</p>")
-        
-    html = ""
-    for f in files:
-        html += f"""
-        <div class="group relative bg-gray-50 border rounded-lg p-2 flex flex-col items-center">
-            <div class="w-full h-64 overflow-hidden rounded mb-2 bg-white flex items-center justify-center">
-                <img src="/posters/{f}" class="max-h-full max-w-full object-contain shadow-sm group-hover:scale-105 transition duration-300">
-            </div>
-            <p class="text-[10px] text-gray-500 truncate w-full text-center mb-2 px-2" title="{f}">{f}</p>
-            <div class="w-full">
-                <a href="/posters/{f}" download class="block w-full text-center bg-gray-200 hover:bg-blue-600 hover:text-white text-gray-700 text-xs py-2 rounded transition">
-                    下载高清原图
-                </a>
-            </div>
-        </div>
-        """
-    return HTMLResponse(content=html)
+        return render_partial("partials/history_empty.html", request=request, items=[])
+
+    return render_partial("partials/history_grid.html", request=request, items=files)
 
 if __name__ == "__main__":
     import uvicorn

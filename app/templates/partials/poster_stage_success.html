@@ -1,0 +1,11 @@
+<div class="text-center animate-fade-in" hx-trigger="load" hx-get="/history" hx-target="#history-list" hx-swap="innerHTML">
+    <img src="/posters/{{ filename }}" class="max-w-full rounded shadow-lg mb-4 mx-auto border" style="max-height: 60vh;">
+    <div class="flex gap-4 justify-center mt-4">
+        <a href="/posters/{{ filename }}" download class="bg-green-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-green-700 shadow transition flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            下载高清海报 (PNG)
+        </a>
+    </div>
+</div>
